@@ -1,37 +1,39 @@
-# MUTANT: Model-Driven Unit Testing using ASCII-art as Notational Test #
+# MUTANT: Model-Driven Unit Testing using ASCII-art as Notational Text #
 
-MUTANT aims to make test developer's lives easier. Its key idea to specify test models using ASCII-art, a text-based visual notation.  The specifications are provided by annotating the respective test methods, allowing efficient collaboration and reuse. 
+MUTANT aims to make test developers' lives easier. Its key idea to specify test models using ASCII-art, a text-based visual notation.  The specifications are provided by annotating the respective test methods, allowing efficient collaboration and reuse. 
 
 The main component of MUTANT is a parser that builds models from ASCII-art specifications and makes these models available to the test framework through a dedicated API. To integrate the parser in your existing tool chain, please follow the instructions provided below.
 
 # Example 
 
-  public class RefactoringTest extends UnitTest {
-    @Test
-    /** @InputModel EPackage pkg = 
-     
-                    +------------+                               
-                    |   Person   |    										
-                    +------------+                               
-                        A   A                          
-               .--------'   '-------.                 
-               |                    |                 
-        +--------------+   +--------------+      
-        | Professor    |   | Student      |
-        |--------------|   |--------------|      
-        | name: String |   | name: String |      
-        +--------------+   +--------------+   
-     */
-    public void testRefactoring() {
-      EPackage pkg = Mutant.getPackage("pkg");
-      EClass person = pkg.getEClass("Person");	
-	  	
-      assert(person.getAttributes().size()==0);
-      PullUpRefactoring refac = new PullUpRefactoring(pkg);
-      refac.execute();
-      assert(person.getAttributes().size()==1);
-    }    
-  }
+      public class RefactoringTest extends UnitTest {
+        @Test
+        /** @InputModel EPackage pkg = 
+         
+                        +------------+                               
+                        |   Person   |    										
+                        +------------+                               
+                            A   A                          
+                   .--------'   '-------.                 
+                   |                    |                 
+            +--------------+   +--------------+      
+            | Professor    |   | Student      |
+            |--------------|   |--------------|      
+            | name: String |   | name: String |      
+            +--------------+   +--------------+   
+         */
+        public void testRefactoring() {
+          EPackage pkg = Mutant.getPackage("pkg");
+          EClass person = pkg.getEClass("Person");	
+	      	
+          assertTrue(person.getAttributes().size()==0);
+          PullUpRefactoring refac = new PullUpRefactoring(pkg);
+          refac.execute();
+          assertTrue(person.getAttributes().size()==1);
+        }    
+      }
+
+The module under test is a model transformation implementing the _pull up attribute_ refactoring. The test model contains three classes, two with an equivalent attribute that is to be pulled up to the common superclass. In the test code, the specified test model is loaded using the dedicated API. The transformation is executed. Assertions are evaluated to check whether the attribute was indeed pulled up.
 
 # How to run the example #
 The example is an Eclipse project: `MutantExample`.
@@ -100,18 +102,20 @@ Implements tests for Printer.java. Demonstrates abstract syntax. (WIP)
 
 # Features #
 
-## currently working ##
+## currently implemented ##
 - Concrete syntax for class models
 - Abbreviated edges
 - Names and multiplicities
-- Abstract syntax (for the most part)
+- Abstract syntax: Mostly, see below
 
 ## not implemented ##
 - Element multiplicity (e.g. [n=3])
 - Abstract syntax: Enum support 
 
+## known bugs ##
+- Abstract syntax: Types are not resolved correctly
 
 
 # Required libraries #
-MUTANT requires EMF end Ecore.
+MUTANT requires EMF and Ecore.
 For your convenience, we include the required EMF and Ecore libraries (which are licensed under the Eclipse Public License Version 1.0) in the `lib/` directory.
