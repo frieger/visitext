@@ -8,7 +8,7 @@ The main component of MUTANT is a parser that builds models from ASCII-art speci
 ```Java
 public class RefactoringTest extends UnitTest {
  @Test
-/** @InputModel EPackage pkg = 
+ /** @InputModel EPackage pkg = 
        
                  +------------+                               
                  |   Person   |    										
