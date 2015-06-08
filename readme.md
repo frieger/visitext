@@ -1,3 +1,39 @@
+# MUTANT: Model-Driven Unit Testing using ASCII-art as Notational Test #
+
+MUTANT aims to make test developer's lives easier. Its key idea to specify test models using ASCII-art, a text-based visual notation.  The specifications are provided by annotating the respective test methods, allowing efficient collaboration and reuse. 
+
+The main component of MUTANT is a parser that builds models from ASCII-art specifications and makes these models available to the test framework through a dedicated API. To integrate the parser in your existing tool chain, please follow the instructions provided below.
+
+# Example 
+
+  public class RefactoringTest extends UnitTest {
+    @Test
+    /** @InputModel EPackage pkg = 
+     
+                    +------------+                               
+                    |   Person   |    										
+                    +------------+                               
+                        A   A                          
+               .--------'   '-------.                 
+               |                    |                 
+        +--------------+   +--------------+      
+        | Professor    |   | Student      |
+        |--------------|   |--------------|      
+        | name: String |   | name: String |      
+        +--------------+   +--------------+   
+     */
+    public void testRefactoring() {
+      EPackage pkg = Mutant.getPackage("pkg");
+      EClass person = pkg.getEClass("Person");	
+	  	
+      assert(person.getAttributes().size()==0);
+      PullUpRefactoring refac = new PullUpRefactoring(pkg);
+      refac.execute();
+      assert(person.getAttributes().size()==1);
+    }    
+  }
+
+
 # How to run the example #
 The example is an Eclipse project: `MutantExample`.
 
@@ -69,13 +105,11 @@ Implements tests for Printer.java. Demonstrates abstract syntax. (WIP)
 - Concrete syntax for classes (see example)
 - Abbreviated edges
 - Names and multiplicities
-
-## currently semi-working (WIP) ##
-- Abstract syntax (see example)
+- Abstract syntax (Most part, see below)
 
 ## not implemented ##
 - Element multiplicity (e.g. [n=3])
-- Enum support for abstract syntax
+- Abstract syntax: Enum support
 
 
 
