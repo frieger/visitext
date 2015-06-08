@@ -101,7 +101,7 @@ Implements tests for Printer.java. Demonstrates abstract syntax. (WIP)
 
 # Features #
 
-## currently working ##
+## currently implemented ##
 - Concrete syntax for classes (see example)
 - Abbreviated edges
 - Names and multiplicities
@@ -111,6 +111,8 @@ Implements tests for Printer.java. Demonstrates abstract syntax. (WIP)
 - Element multiplicity (e.g. [n=3])
 - Abstract syntax: Enum support
 
+## open bugs ##
+- Abstract syntax: Types not resolved correctly
 
 
 
