@@ -6,32 +6,32 @@ The main component of MUTANT is a parser that builds models from ASCII-art speci
 
 # Example 
 
-  public class RefactoringTest extends UnitTest {
-    @Test
-    /** @InputModel EPackage pkg = 
-     
-                    +------------+                               
-                    |   Person   |    										
-                    +------------+                               
-                        A   A                          
-               .--------'   '-------.                 
-               |                    |                 
-        +--------------+   +--------------+      
-        | Professor    |   | Student      |
-        |--------------|   |--------------|      
-        | name: String |   | name: String |      
-        +--------------+   +--------------+   
-     */
-    public void testRefactoring() {
-      EPackage pkg = Mutant.getPackage("pkg");
-      EClass person = pkg.getEClass("Person");	
-	  	
-      assert(person.getAttributes().size()==0);
-      PullUpRefactoring refac = new PullUpRefactoring(pkg);
-      refac.execute();
-      assert(person.getAttributes().size()==1);
-    }    
-  }
+    public class RefactoringTest extends UnitTest {
+        @Test
+        /** @InputModel EPackage pkg = 
+         
+                        +------------+                                 
+                        |   Person   |    									
+                        +------------+                               
+                            A   A                          
+                   .--------'   '-------.                 
+                   |                    |                 
+            +--------------+   +--------------+      
+            | Professor    |   | Student      |
+            |--------------|   |--------------|      
+            | name: String |   | name: String |      
+            +--------------+   +--------------+   
+         */
+        public void testRefactoring() {
+          EPackage pkg = Mutant.getPackage("pkg");
+          EClass person = pkg.getEClass("Person");	
+            	  	
+          assert(person.getAttributes().size()==0);
+          PullUpRefactoring refac = new PullUpRefactoring(pkg);
+          refac.execute();
+          assert(person.getAttributes().size()==1);
+        }    
+      }
 
 
 # How to run the example #
