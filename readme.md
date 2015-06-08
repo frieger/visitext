@@ -1,4 +1,4 @@
-# MUTANT: Model-Driven Unit Testing using ASCII-art as Notational Test #
+# MUTANT: Model-Driven Unit Testing using ASCII-art as Notational Text #
 
 MUTANT aims to make test developers' lives easier. Its key idea to specify test models using ASCII-art, a text-based visual notation. The specifications are provided by annotating the respective test methods, allowing efficient collaboration and reuse. 
 
@@ -105,7 +105,7 @@ Implements tests for Printer.java. Demonstrates abstract syntax. (WIP)
 - Concrete syntax for classes (see example)
 - Abbreviated edges
 - Names and multiplicities
-- Abstract syntax (Most part, see below)
+- Abstract syntax: Most part, see below
 
 ## not implemented ##
 - Element multiplicity (e.g. [n=3])
@@ -115,5 +115,5 @@ Implements tests for Printer.java. Demonstrates abstract syntax. (WIP)
 
 
 # Required libraries #
-MUTANT requires EMF end Ecore.
+MUTANT requires EMF and Ecore.
 For your convenience, we include the required EMF and Ecore libraries (which are licensed under the Eclipse Public License Version 1.0) in the `lib/` directory.
