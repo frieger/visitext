@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="ASCII"?>
+<company:Company xmlns:company="http://company">
+  <departments name="Accounting" employees="//@employees.1" budget="25000000"/>
+  <employees name="Alice"/>
+  <employees name="Bob"/>
+</company:Company>
