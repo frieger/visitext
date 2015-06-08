@@ -33,7 +33,7 @@ Three eclipse projects:
 
 ## MutantAsciiCompiler ##
 The compiler should be put into your build script. See later on how to get this to work using Eclipse.
-The compiler is invoked by calling mutant.main.MutantCompiler.main(String[] args). Arguments are: `Java-Source-Location <Model-Location> <DEBUG>`
+The compiler is invoked by calling mutant.main.MutantCompiler.main(String[] args). Arguments are: `Java-Source-Location [Model-Location] [DEBUG]`
 
 Java-Source-Location specifies a directory with all your java source files. This directory will be traversed recursively.
 
@@ -82,4 +82,4 @@ Implements tests for Printer.java. Demonstrates abstract syntax. (WIP)
 
 # Required libraries #
 MUTANT requires EMF end Ecore.
-For your convenience, we include the required EMF and Ecore libraries (which are licensed under the Eclipse Public License Version 1.0) in the `lib` directory.
+For your convenience, we include the required EMF and Ecore libraries (which are licensed under the Eclipse Public License Version 1.0) in the `lib/` directory.
