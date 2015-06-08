@@ -1,3 +1,5 @@
+import static org.junit.Assert.*;
+
 import java.io.File;
 
 import mutant.Mutant;
@@ -41,10 +43,11 @@ public class PullUpRefactoringTests {
 			System.out.println(ecl);
 		}
 		EClass person = (EClass) pkg.getEClassifier("Person");
-		assert(person.getEAttributes().size()==0);
+		assertTrue(person.getEAttributes().size()==0);
 		PullUpRefactoring refactoring = new PullUpRefactoring(pkg);
 		refactoring.execute();
-		assert(person.getEAttributes().size()==1);
+		assertTrue(person.getEAttributes().size()==1);
+
 	}
 
 }
