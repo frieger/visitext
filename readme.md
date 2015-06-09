@@ -38,7 +38,7 @@ The module under test in this example is a model transformation implementing the
 
 ## How to run the example ##
 
-Place the `MutantExample` project into your workspace and MUTANT should generate the model files. You can verify this by deleting the files in the `mutant/` directory and rebuilding the `MutantExample` project.
+Place the `MutantExample` project into your workspace and MUTANT should generate the model files for all contained test classes. You can verify this by deleting the files in the `mutant/` directory and rebuilding the `MutantExample` project.
 
 ### Building ###
 
@@ -65,7 +65,7 @@ MUTANT will create the `mutant/` subdirectory in the directory given by the firs
 
 
 ## Repository structure ##
-This repository comprises eclipse projects:
+This repository comprises the following Eclipse projects:
 
 1. *MutantAsciiCompiler* parses annotated Java files and builds models
 2. *MutantAsciiApi* provides easy access to these models from your Java application
