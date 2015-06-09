@@ -26,15 +26,15 @@ public class RefactoringTest extends UnitTest {
     EPackage pkg = Mutant.getPackage("pkg");
     EClass person = pkg.getEClass("Person");	
       	
-   assertTrue(person.getAttributes().size()==0);
-   PullUpRefactoring refac = new PullUpRefactoring(pkg);
-   refac.execute();
-   assertTrue(person.getAttributes().size()==1);
+    assertTrue(person.getAttributes().size()==0);
+    PullUpRefactoring refac = new PullUpRefactoring(pkg);
+    refac.execute();
+    assertTrue(person.getAttributes().size()==1);
    }    
  }
  ```
 
-The module under test in this example is a model transformation implementing the _pull up attribute_ refactoring. The test model contains three classes, two with an equivalent attribute that is to be pulled up to the common superclass. In the test code, the specified test model is loaded using the dedicated API. The transformation is executed. Assertions are evaluated to check whether the attribute was indeed pulled up.
+The module under test in this example is a model transformation implementing the [_pull up attribute_](http://refactorings4gts.wikia.com/wiki/Pull_Up_Attribute) refactoring. The test model contains three classes, two with an equivalent attribute that is to be pulled up to the common superclass. In the test code, the specified test model is loaded using the dedicated API. The transformation is executed. Assertions are evaluated to check whether the attribute was indeed pulled up.
 
 ## How to run the example ##
 
