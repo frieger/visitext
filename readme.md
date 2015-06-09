@@ -37,7 +37,6 @@ public class RefactoringTest extends UnitTest {
 The module under test in this example is a model transformation implementing the _pull up attribute_ refactoring. The test model contains three classes, two with an equivalent attribute that is to be pulled up to the common superclass. In the test code, the specified test model is loaded using the dedicated API. The transformation is executed. Assertions are evaluated to check whether the attribute was indeed pulled up.
 
 ## How to run the example ##
-The example is an Eclipse project: `MutantExample`.
 
 Place the `MutantExample` project into your workspace and MUTANT should generate the model files. You can verify this by deleting the files in the `mutant/` directory and rebuilding the `MutantExample` project.
 
@@ -47,7 +46,7 @@ We already configured a builder, so MUTANT should run automatically when the pro
 
 #### Manual building ####
 
-The MUTANT compiler takes one to three arguments:
+The MUTANT parser and model builder (`MutantAsciiCompiler`) takes one to three arguments:
 
 1. The first argument is the location of your Java source files or the location of the project.
 2. The second argument is optional: It is the location of your meta-models.
@@ -68,19 +67,17 @@ MUTANT will create the `mutant/` subdirectory in the directory given by the firs
 ## Repository structure ##
 This repository comprises eclipse projects:
 
-1. *MutantAsciiCompiler* compiles java files to models
-2. *MutantAsciiApi* provides easy access to these models from your java application
+1. *MutantAsciiCompiler* parses annotated Java files and builds models
+2. *MutantAsciiApi* provides easy access to these models from your Java application
 3. *MutantExample* is an example of how the system can be used. See later for information on how to get the example running on your system.
 
 ### MutantAsciiCompiler ###
 The compiler should be put into your build script. See later on how to get this to work using Eclipse.
-The compiler is invoked by calling mutant.main.MutantCompiler.main(String[] args). Arguments are: `Java-Source-Location [Model-Location] [DEBUG]`
+The compiler is invoked by calling `mutant.main.MutantCompiler.main(String[] args)`. Arguments are: `Java-Source-Location [Model-Location] [DEBUG]`
 
-Java-Source-Location specifies a directory with all your java source files. This directory will be traversed recursively.
-
-Model-Location specifies a directory with all your meta-models (for abstract syntax). This directory will not be traversed recursively.
-
-DEBUG is a flag that enables more verbose debug output.
+ - `Java-Source-Location` specifies a directory with all your java source files. This directory will be traversed recursively.
+ - `Model-Location` specifies a directory with all your meta-models (for abstract syntax). This directory will not be traversed recursively.
+ - `DEBUG` is a flag that enables more verbose debug output.
 
 **Attention** MUTANT will create the directory `mutant/` as a subdirectory of Java-Source-Location and will overwrite its contents.
 
@@ -94,8 +91,8 @@ Concrete syntax for classes and abstract syntax are demonstrated. In order to fa
 
  - *PullUpRefactoring.java*: This is a class that implements a "pull up attribute" refactoring.
  - *PullUpRefactoringTests.java*: Implements the test from the paper using MUTANT's support for concrete syntax for class diagrams. MUTANT will convert primitive Java types (and String and Object) to the corresponding ECore ETypes for added convenience.
- - *Printer.java* This is a class that implements methods to print model elements. (WIP)
- - *PrinterTest.java* Implements tests for Printer.java. Demonstrates abstract syntax. (WIP)
+ - *Printer.java*: This is a class that implements methods to print model elements. (WIP)
+ - *PrinterTest.java*: Implements tests for Printer.java. Demonstrates abstract syntax. (WIP)
 
 ## Features ##
 
