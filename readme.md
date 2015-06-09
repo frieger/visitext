@@ -104,11 +104,7 @@ Concrete syntax for classes and abstract syntax are demonstrated. In order to fa
 
 ### not implemented ###
 - Element multiplicity (e.g. [n=3])
-- Abstract syntax: Enum support 
-
-### known bugs ###
-- Abstract syntax: Types are not resolved correctly
-
+- Support for arbitrary EDataTypes as values in abstract syntax (currently supported: EENumLiterals, EString, EInt, EDouble, EFloat, EChar, EBoolean)
 
 ## Required libraries ##
 MUTANT requires EMF and Ecore.
