@@ -16,6 +16,8 @@ import mutant.util.Util;
  */
 public class AsciiParser {
 
+	private final static int RESERVED_COLOR = -9;
+	
 	/**
 	 * Builds array from String
 	 * @param s
@@ -67,7 +69,7 @@ public class AsciiParser {
 	public static void detectAndFollowSignals(AscChar[][] array, EdgeParser ep) {
 		for (int y = 0; y < array.length; y++) {
 			for (int x = 0; x < array[0].length; x++) {
-				if (array[y][x].c == '[' && array[y][x].color == 0) {
+				if (array[y][x].c == '[' && (array[y][x].color == 0 || array[y][x].color == RESERVED_COLOR)) {
 					// found unknown signal
 					int nextCol = Util.getNextColor();
 					String signalName = ep.processSignal(array, x, y, nextCol, false);
@@ -171,6 +173,28 @@ public class AsciiParser {
 		}
 		
 		return coords;
+	}
+	
+	public static void reserveColorAllLabelsAndSignals(AscChar[][] input) {
+		for (int y = 0; y < input.length; y++) {
+			boolean insideLabel = false;
+			for (int x = 0; x < input[0].length; x++) {
+				if (input[y][x].color == 0) { // only color uncolored characters
+					if (input[y][x].c == '{' || input[y][x].c == '[') {
+						insideLabel = true;
+					}
+					
+					if (insideLabel) {
+						input[y][x].color = RESERVED_COLOR;
+					}
+					
+					if (input[y][x].c == '}' || input[y][x].c == ']') {
+						insideLabel = false;
+					}
+					// inside label
+				}
+			}
+		}
 	}
 
 }

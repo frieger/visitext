@@ -27,6 +27,7 @@ import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
+import org.eclipse.emf.ecore.xmi.XMIResource;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
 import org.eclipse.emf.ecore.xmi.impl.XMLResourceFactoryImpl;
 
@@ -38,6 +39,16 @@ import org.eclipse.emf.ecore.xmi.impl.XMLResourceFactoryImpl;
 public class EcoreGenerator {
 
 	private static Map<String, EPackage> namespaceUriToEPackageMap = new HashMap<String, EPackage>();
+	
+	private static boolean embedSchemaLocationUri = false;
+
+	/**
+	 * Configure the Ecore Generator
+	 * @param embedSchemaLocation if true, the generator will embed the location of the schema in the generated xmi file
+	 */
+	public static void configure(boolean embedSchemaLocation) {
+		embedSchemaLocationUri = embedSchemaLocation;
+	}
 	
 	/**
 	 * Generates an ecore class model from the input
@@ -144,8 +155,14 @@ public class EcoreGenerator {
 					ref.setUpperBound(1);
 				}
 				
+				try {
 				sourceClass.getEStructuralFeatures().add(ref);
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.exit(0);
+				}
 			} if (ae.isInheritance) {
+				System.out.println("inheritance edge " + ae);
 				EClass childClass = eClassColors.get(ae.startColor);
 				EClass superClass = eClassColors.get(ae.endColor);
 				childClass.getESuperTypes().add(superClass);
@@ -204,8 +221,12 @@ public class EcoreGenerator {
 	 * @param edges		model edges fromt the ASCII representation
 	 * @param modelUri	URI of saved model
 	 * @throws IOException
+	 * @throws TypeException 
 	 */
-	public static void generateEcoreAbstractModel(MutantModelInfo info, List<AscClass> classes, ArrayList<AscEdge> edges, URI modelUri) throws IOException {
+	public static void generateEcoreAbstractModel(MutantModelInfo info, List<AscClass> classes, ArrayList<AscEdge> edges, URI modelUri) throws IOException, TypeException {
+		configure(true);
+		
+		
 		EcoreFactory fact = EcoreFactory.eINSTANCE;
 		
 		System.out.println("Namespace uri to epackage map contains " + namespaceUriToEPackageMap.size() + " entries");
@@ -216,6 +237,7 @@ public class EcoreGenerator {
 		System.out.println(info.namespaceUri+"<");
 		EPackage pkg = namespaceUriToEPackageMap.get(info.namespaceUri);
 		System.out.println(pkg);
+		//EPackage.Registry.INSTANCE.put(arg0, arg1)
 				
 		List<EObject> modelElements = new ArrayList<EObject>();
 		Map<Integer, EObject> modelElementColors = new HashMap<Integer, EObject>();		// class colors of eclasses
@@ -226,7 +248,6 @@ public class EcoreGenerator {
 		EFactory modelElementFactory = pkg.getEFactoryInstance();
 		EClass rootClass = (EClass) pkg.getEClassifier(info.rootType);
 		EObject rootObject = modelElementFactory.create(rootClass);
-		
 		
 		// we first need to process all enums
 		/*
@@ -260,6 +281,7 @@ public class EcoreGenerator {
 			} else { // class is not enum
 				EClass currentClass = (EClass) pkg.getEClassifier(cl.classType);
 				EObject currentObject;
+				System.out.println("current class: requested " + cl.classType + " got " + currentClass);
 				
 				if (cl.classType.equals(info.rootType) && (cl.instanceName.equals(info.rootName))) {
 						// this is the root object
@@ -273,11 +295,14 @@ public class EcoreGenerator {
 					String attrVal = stripQuotes(attr.getValue());
 					//EAttribute eattr = fact.createEAttribute();
 					EAttribute eattr = (EAttribute) currentClass.getEStructuralFeature(attrName);
-
+					
+					if (eattr == null) {
+						throw new TypeException("Attribute " + attrName + " does not exist for " + currentClass);
+					}
+					
+					System.out.println("EAttribute: Requested " + attrName + " got " + eattr);
 					System.out.println(eattr);
 					System.out.println(eattr.getEType());
-
-					System.out.println("is string: " + eattr.getEType().equals(EcorePackage.eINSTANCE.getEInt()));
 					
 					Object attributeValueObject = null;
 					
@@ -293,8 +318,15 @@ public class EcoreGenerator {
 						attributeValueObject = attrVal.charAt(0);
 					} else if (eattr.getEType().equals(EcorePackage.eINSTANCE.getEBoolean())) {
 						attributeValueObject = Boolean.parseBoolean(attrVal);
+					} else { // possibly EENum?
+						EEnum eenum = ((EEnum) eattr.getEType());
+						if (eenum == null) {
+							throw new TypeException("Could not find enum " + eattr.getEType());
+						} else {
+							attributeValueObject = eenum.getEEnumLiteralByLiteral(attrVal);
+						}
+						System.out.println("eenum");
 					}
-					// TODO: enums
 					
 					currentObject.eSet(eattr, attributeValueObject);
 					
@@ -327,31 +359,45 @@ public class EcoreGenerator {
 				//pkg.getEClassifiers().add(ecl);
 			}
 		}
-		
-		
-		
-		
+				
 		// process edges
 		for(AscEdge ae : edges) {
 			if (!ae.isInheritance) {
 				EObject sourceObject = modelElementColors.get(ae.startColor);
 				EObject targetObject = modelElementColors.get(ae.endColor);
+				if (sourceObject == null) {
+					
+					throw new TypeException("source not in scope: " + sourceObject + "  (target: " + targetObject + ",   edge: " + ae.label + ":" + ae.startColor + " " + ae.endColor + ")");
+				}
+				if (targetObject == null) {
+					throw new TypeException("target not in scope");
+				}
 				
 				EStructuralFeature reference = sourceObject.eClass().getEStructuralFeature(ae.label);	// get reference type
-				((List) sourceObject.eGet(reference)).add(targetObject);	// add reference to source object
 				
+				if (reference == null) {
+					throw new TypeException("reference " + ae.label + " does not exist for " + sourceObject);
+				}
+				
+				System.out.println("Reference: Requested " + ae.label + " got " + reference);
+				System.out.println("Source: " + sourceObject + " target " + targetObject);
+				if (reference.isMany()) { // 0..* reference
+					((List) sourceObject.eGet(reference)).add(targetObject);	// add reference to source object
+				} else { // 0..1 reference
+					sourceObject.eSet(reference, targetObject);
+				}
 				
 				System.out.println("edge " + ae.label + " from " + sourceObject + " to " + targetObject + " containment: " + ae.isContainment);
 				
-				
-				for (Object e : ((List) sourceObject.eGet(reference))) {
-					System.out.println("..." + e);
+				if (reference.isMany()) {
+					for (Object e : ((List) sourceObject.eGet(reference))) {
+						System.out.println("..." + e);
+					}
 				}
-			} /*if (ae.isInheritance) {
-				EClass childClass = modelElementColors.get(ae.startColor);
-				EClass superClass = modelElementColors.get(ae.endColor);
-				childClass.getESuperTypes().add(superClass);
-			} */
+			} else {
+				throw new TypeException("Inheritance can not be used in abstract syntax");
+			}
+
 		}
 		
 		
@@ -369,12 +415,17 @@ public class EcoreGenerator {
 		}
 		
 		
+		HashMap<String, Object> xmiExportOptions = new HashMap<String, Object>();
+		if (embedSchemaLocationUri) {
+			xmiExportOptions.put(XMIResource.OPTION_SCHEMA_LOCATION, true);
+		}
+		
 		ResourceSet mrs = new ResourceSetImpl();
 		mrs.getResourceFactoryRegistry().getExtensionToFactoryMap().put("xmi", new XMLResourceFactoryImpl());
 		Resource mres = mrs.createResource(modelUri);
 		mres.getContents().add(rootObject);
 		
-		mres.save(null);
+		mres.save(xmiExportOptions);
 
 	}
 	
@@ -385,6 +436,42 @@ public class EcoreGenerator {
 			return s.substring(firstQuote+1, lastQuote);
 		}
 		return s;
+	}
+	
+	private static class TypeException extends Exception {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 2483652720758633516L;
+
+		public TypeException() {
+			super();
+			// TODO Auto-generated constructor stub
+		}
+
+		public TypeException(String arg0, Throwable arg1, boolean arg2,
+				boolean arg3) {
+			super(arg0, arg1, arg2, arg3);
+			// TODO Auto-generated constructor stub
+		}
+
+		public TypeException(String arg0, Throwable arg1) {
+			super(arg0, arg1);
+			// TODO Auto-generated constructor stub
+		}
+
+		public TypeException(String arg0) {
+			super(arg0);
+			// TODO Auto-generated constructor stub
+		}
+
+		public TypeException(Throwable arg0) {
+			super(arg0);
+			// TODO Auto-generated constructor stub
+		}
+		
+		
 	}
 
 }

@@ -288,25 +288,39 @@ public class MutantCompiler {
 				
 				AscChar[][] inputArray = AsciiParser.buildArrayFromString(mutantContents);
 				
+				// First, get classes
 				List<AscClass> classes = null;
 				if (info.mutantType == MutantType.CLASS) {
 					classes = ModelElementParser.getClassesConcreteSyntax(inputArray);
 				} else if (info.mutantType == MutantType.ABSTRACT) {
 					classes = ModelElementParser.getModelElementsAbstractSyntax(inputArray);
 				}
+				
+				// Then, reserve labels so they will not be parsed by the arrowhead finder
+				AsciiParser.reserveColorAllLabelsAndSignals(inputArray);
+				
+				
+				//Util.printArrayWithColor(inputArray);
+				
+				
+				// Detect arrowheads
 				List<Coords> arrowHeads = AsciiParser.getArrowHeadLocations(inputArray);
 	
 				Util.printArray(inputArray);
 				
+				// Follow the lines from arrowheads
 				for(Coords p : arrowHeads) {
 					System.out.println("arrowhead @" + p.toString());
 					ep.followLineFromArrowhead(p.x, p.y, inputArray, Util.getNextColor());	// XXX: does this still work? if not, swap x and y
 				}
+				
+				// Detect and follow signals, which might be dangling
 				AsciiParser.detectAndFollowSignals(inputArray, ep);
+				
+				// connect signal edges and desugar multi-edges to multiple edges
 				ep.connectSignalEdges();
 	
 				// generate ecore
-			
 				if (info.mutantType == MutantType.CLASS) {
 					URI modelUri = URI.createURI("file:///" + basePath + File.separator + modelDirectory + File.separator + modelFilename + ".ecore");
 					System.out.println("MUTANT will now generate CLASS " + modelUri);					

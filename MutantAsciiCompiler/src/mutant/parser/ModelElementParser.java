@@ -119,8 +119,8 @@ public class ModelElementParser {
 				// name : Type
 				String myClassName = foo.substring(0, foo.indexOf(':')).trim();
 				if (myClassName.isEmpty()) {
-					System.err.println("Wrong syntax in class definition for class at (" + myClass.x1 + "," + myClass.y1 + "),(" + myClass.x2 + "," + myClass.y2 + "), missing NAME for class. Expected name : Type" );
-					System.err.println("ERROR RECOVERY: select generic instance name.");
+					//System.err.println("Wrong syntax in class definition for class at (" + myClass.x1 + "," + myClass.y1 + "),(" + myClass.x2 + "," + myClass.y2 + "), missing NAME for class. Expected name : Type" );
+					//System.err.println("ERROR RECOVERY: select generic instance name.");
 					myClassName = Util.getNextGenericInstanceName();
 				}
 				String myClassType = foo.substring(foo.indexOf(':') + 1).trim();
