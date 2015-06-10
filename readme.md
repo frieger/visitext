@@ -1,8 +1,8 @@
 # MUTANT: Model-Driven Unit Testing using ASCII-art as Notational Text #
 
-MUTANT aims to make test developers' lives easier. Its key idea to specify test models using a text-based visual notation. The specifications are provided by annotating the respective test methods, providing test developers the full benefits of the powerful editing and collaboration tools found in state-of-the-art source code IDEs.
+MUTANT aims to make test developers' lives easier. Its key idea to specify test models using a text-based visual notation. The specifications are provided by annotating the respective test methods, making the full benefits of the powerful editing and collaboration tools found in state-of-the-art source code IDEs available to test developers.
 
-The main component of MUTANT is a parser that builds models from ASCII-art specifications and makes these models available to the test framework through a dedicated API. To integrate the parser in your existing tool chain, please follow the instructions provided below.
+The main component of MUTANT is a parser that builds models from the visual specifications and makes these models available to the test framework through a dedicated API. To integrate the parser in your existing tool chain, please follow the instructions provided below.
 
 ## Example ##
 ```Java
