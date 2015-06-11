@@ -109,3 +109,7 @@ Concrete syntax for classes and abstract syntax are demonstrated. In order to fa
 ## Required libraries ##
 MUTANT requires EMF and Ecore.
 For your convenience, we include the required EMF and Ecore libraries (which are licensed under the Eclipse Public License Version 1.0) in the `lib/` directory.
+
+## Editing tools
+ - Eclipse's [block selection mode](http://blog.jooq.org/2013/10/12/eclipses-awesome-block-selection-mode/) is a nice tool for keyboard-based ASCII-art editing. It supports to add or remove characters in successive lines.
+ - [ASCII Flow](http://asciiflow.com/) is a free online editor  providing mouse-based editing tools such as box drawing, line drawing, and a freehand eraser.
