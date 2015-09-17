@@ -20,15 +20,15 @@ public class ModelElementParser {
 	 * @param array
 	 * @return
 	 */
-	public static List<AscClass> getModelElementsAbstractSyntax(AscChar[][] array) {
+	public static List<AscClass> getModelElementsAbstractSyntax(AscChar[][] array, int lineNumberAtStart) {
 		// TODO: Test & example
 		ArrayList<Coords> coords = new ArrayList<Coords>();
 		
 		for (int i = 0; i < array.length; i++) {
 			for (int u = 0; u < array[0].length; u++) {
 				if (array[i][u].c == '+') {
-					System.out.println("found + at " + u + ", " + i);
-					coords.add(new Coords(u, i));
+					System.out.println("found + at " + u + ", " + i + " --> " + (lineNumberAtStart+i));
+					coords.add(new Coords(u, i, lineNumberAtStart+i));
 				}
 			}
 		}
@@ -69,8 +69,9 @@ public class ModelElementParser {
 					if (botLeftCoord != null && testCoord.y != botLeftCoord.y) {
 						// couldn't find bottom right coordinate on the same line as bottom left coordinate
 						// --> malformed syntax, so abort
-						System.err.println("malformed syntax, couldn't find bottom right '+' on the same line as bottom left '+', was testing " + testCoord);
-						
+						//System.err.println("malformed syntax, couldn't find bottom right '+' on the same line as bottom left '+', was testing " + testCoord + botLeftCoord);
+						System.err.println("malformed syntax, couldn't find bottom right '+' on the same line as bottom left '+', was testing " + botLeftCoord);
+
 						break findClasses;
 					}
 					if (testCoord.x == topRightCoord.x) {
@@ -171,7 +172,7 @@ public class ModelElementParser {
 	 * @param array	input model
 	 * @return list of the found classes
 	 */
-	public static List<AscClass> getClassesConcreteSyntax(AscChar[][] array) {
+	public static List<AscClass> getClassesConcreteSyntax(AscChar[][] array, int lineNumberAtStart) {
 		
 		ArrayList<Coords> coords = new ArrayList<Coords>();
 		
@@ -179,7 +180,7 @@ public class ModelElementParser {
 			for (int u = 0; u < array[0].length; u++) {
 				if (array[i][u].c == '+') {
 					System.out.println("found + at " + u + ", " + i);
-					coords.add(new Coords(u, i));
+					coords.add(new Coords(u, i, lineNumberAtStart + i));
 				}
 			}
 		}

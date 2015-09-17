@@ -8,15 +8,30 @@ package mutant.util;
 public class Coords {
 	public final int x;
 	public final int y;
+	public final int lineNumberFromSourceFile;
 	
+	
+	
+	public Coords(int x, int y, int lineNumerFromSourceFile) {
+		super();
+		this.x = x;
+		this.y = y;
+		this.lineNumberFromSourceFile = lineNumerFromSourceFile;
+	}
+
 	public Coords(int x, int y) {
 		this.x = x;
 		this.y = y;
+		lineNumberFromSourceFile = -1;
 	}
 	
 	@Override
 	public String toString() {
-		return "(" + x + "," + y + ")";
+		if (lineNumberFromSourceFile == -1) {
+			return "(" + x + "," + y + ")";
+		} else {
+			return "(" + x + "," + y + ")  on line " + lineNumberFromSourceFile;
+		}
 	}
 
 	@Override

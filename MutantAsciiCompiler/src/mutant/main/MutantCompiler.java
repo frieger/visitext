@@ -92,19 +92,36 @@ public class MutantCompiler {
 			String fileExt = filename.substring(filename.lastIndexOf(".") + 1);
 			System.out.println(filename + " " + fileExt);
 			if (fileExt.equalsIgnoreCase(fileExtension)) {
-				Map<String, String> mutantMethods = parseJavadocMutantFile(start);
+				//Map<String, String> mutantMethods = parseJavadocMutantFile(start);
 				String javaFileName = start.getName().substring(0, start.getName().lastIndexOf("."));
-				compileMutant(javaFileName, mutantMethods);
+				compileMutant(javaFileName, parseJavadocMutantFile(start));
 			}
 		}
 	}
 	
-	private static Map<String, String> parseJavadocMutantFile(File sourceFile) {
+	private static class MutantJavadocParseResult {
+		public Map<String, String> result;
+		public Map<String, Integer> lineNumbers;
+		
+		public MutantJavadocParseResult(Map<String, String> result,
+				Map<String, Integer> lineNumbers) {
+			super();
+			this.result = result;
+			this.lineNumbers = lineNumbers;
+		}
+		
+		
+	}
+	
+	private static MutantJavadocParseResult parseJavadocMutantFile(File sourceFile) {
 		System.out.println("MUTANT: Trying to parse " + sourceFile.getPath());
 		Map<String, String> methodNameToMutantContentsMap = null;
+		Map<String, Integer> methodNameToLineNumberMap = null;
 		try {
 			Scanner sc = new Scanner(sourceFile);
 			methodNameToMutantContentsMap = new HashMap<String, String>(); 
+			methodNameToLineNumberMap = new HashMap<String, Integer>(); 
+
 			StringBuilder sb = new StringBuilder();
 
 			String currentMutantModel = null;
@@ -113,7 +130,10 @@ public class MutantCompiler {
 			boolean inJavadocComment = false;
 			boolean foundMutantModel = false;
 			String currentMethodName = null;
+			int currentLineNumber = 0;
+			int startLineNumber = 0;
 			while (sc.hasNextLine()) {
+				currentLineNumber++;
 				String currLine = sc.nextLine();
 				if (DEBUG) {
 					System.out.println("line: " + currLine);
@@ -126,6 +146,7 @@ public class MutantCompiler {
 				if (inJavadocComment) {
 					if (currLine.contains("@InputModel")) {
 						inMutantModel = true;
+						startLineNumber = currentLineNumber;
 					}
 					if (currLine.trim().contains("@ModelEnd")) {
 						inMutantModel = false;
@@ -198,6 +219,7 @@ public class MutantCompiler {
 								}
 								foundMethod = true;
 								methodNameToMutantContentsMap.put(currentMethodName, currentMutantModel);
+								methodNameToLineNumberMap.put(currentMethodName, startLineNumber);
 								foundMutantModel = false;
 								break; // no need to parse more tokens
 							}
@@ -231,6 +253,7 @@ public class MutantCompiler {
 				System.out.println("The following MUTANT models have been found");
 				for (Entry<String, String> e : methodNameToMutantContentsMap.entrySet()) {
 					System.out.println("\n");
+					System.out.println("Line number:" + methodNameToLineNumberMap.get(e.getKey()));
 					System.out.println("Method name:" + e.getKey() + "<");
 					System.out.println("MUTANT model:\n" + e.getValue() + "<");
 				}
@@ -241,7 +264,8 @@ public class MutantCompiler {
 			e.printStackTrace();
 		}
 		
-		return methodNameToMutantContentsMap;
+		//return methodNameToMutantContentsMap;
+		return new MutantJavadocParseResult(methodNameToMutantContentsMap, methodNameToLineNumberMap);
 	}
 	
 	private static MutantModelInfo getMutantModelInfo(String mutantContents) {
@@ -267,9 +291,12 @@ public class MutantCompiler {
 	
 	
 	
-	private static void compileMutant(String filename, Map<String, String> methodNameToMutantContentsMap) {
+	private static void compileMutant(String filename, MutantJavadocParseResult parseResult) {
+		Map<String, String> methodNameToMutantContentsMap = parseResult.result;
+		Map<String, Integer> methodNameToLineNumberMap = parseResult.lineNumbers;
 		try {
 			for (Entry<String, String> e : methodNameToMutantContentsMap.entrySet()) {
+				int lineNumber = methodNameToLineNumberMap.get(e.getKey());
 				System.out.println("---\n" + e.getKey());
 				MutantModelInfo info = getMutantModelInfo(e.getValue());
 				
@@ -291,9 +318,9 @@ public class MutantCompiler {
 				// First, get classes
 				List<AscClass> classes = null;
 				if (info.mutantType == MutantType.CLASS) {
-					classes = ModelElementParser.getClassesConcreteSyntax(inputArray);
+					classes = ModelElementParser.getClassesConcreteSyntax(inputArray, lineNumber);
 				} else if (info.mutantType == MutantType.ABSTRACT) {
-					classes = ModelElementParser.getModelElementsAbstractSyntax(inputArray);
+					classes = ModelElementParser.getModelElementsAbstractSyntax(inputArray, lineNumber);
 				}
 				
 				// Then, reserve labels so they will not be parsed by the arrowhead finder
