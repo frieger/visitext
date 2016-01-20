@@ -2,13 +2,18 @@ package mutant.generator;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import mutant.ascii.representation.AscClass;
 import mutant.ascii.representation.AscEdge;
+import mutant.ascii.representation.AscMethod;
 import mutant.main.MutantModelInfo;
 
 import org.eclipse.emf.common.util.URI;
@@ -19,7 +24,9 @@ import org.eclipse.emf.ecore.EEnum;
 import org.eclipse.emf.ecore.EEnumLiteral;
 import org.eclipse.emf.ecore.EFactory;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EOperation;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EParameter;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.EcoreFactory;
@@ -61,6 +68,8 @@ public class EcoreGenerator {
 		EcoreFactory fact = EcoreFactory.eINSTANCE;
 		EPackage pkg = fact.createEPackage();
 		pkg.setName(packageName);
+		pkg.setNsPrefix(packageName);
+		pkg.setNsURI("http://" + packageName);
 		
 		List<EClass> eclasses = new ArrayList<EClass>();
 		Map<Integer, EClass> eClassColors = new HashMap<Integer, EClass>();		// class colors of eclasses
@@ -89,21 +98,45 @@ public class EcoreGenerator {
 		}
 		
 	
+		
+		// this hashmap is used to defer attribute type resolution for attributes which have "class" types
+		// The map is structured as follows:
+		// class -> (attributeName, attributeType)
+		//HashMap<AscClass, Entry<String, String>> deferredAttributeTypes = new HashMap<AscClass, Entry<String, String>>();
+		
+		
+		// create all classes. This is later used for parameter type resolution
+		for (AscClass cl : classes) {
+			if (cl.isEnumClass) {
+				// class is enum, already processed
+			} else {
+				// class is not enum
+				EClass ecl = fact.createEClass();
+				ecl.setName(cl.classType);
+				ecl.setAbstract(cl.isAbstractClass);
+				eClassColors.put(cl.classColor, ecl);
+				eclasses.add(ecl);
+			}
+		}
+		
 		// now process the rest of the classes
 		for(AscClass cl : classes) {
 			if (cl.isEnumClass) { // class is enum
 				// already processed
 			} else { // class is not enum
-				EClass ecl = fact.createEClass();
-				ecl.setName(cl.classType);
-				ecl.setAbstract(cl.isAbstractClass);
+				//EClass ecl = fact.createEClass();
+				//ecl.setName(cl.classType);
+				//ecl.setAbstract(cl.isAbstractClass);
+				EClass ecl = getClassByName(cl.classType, eclasses);
 				
+				// process attributes
 				for (Entry<String, String> attr : cl.attributes.entrySet()) {
 					String key = attr.getKey();
 					String val = attr.getValue();
 					EAttribute eattr = fact.createEAttribute();
 					EClassifier attrType = null;
 					
+					boolean createAttribute = true;
 					if (val != null) {
 						if (val.equalsIgnoreCase("String") || (val.equalsIgnoreCase("EString"))) {
 							attrType = EcorePackage.eINSTANCE.getEString();
@@ -121,20 +154,61 @@ public class EcoreGenerator {
 							attrType = EcorePackage.eINSTANCE.getEBoolean();
 						} else if ((eenums.keySet().contains(val))){
 							attrType = eenums.get(val);
+						} else {
+							// attribute has class type -- not supported by ecore
+							System.err.println("attribute has some other type: " + key +"->" + val);
+							//attrType = getClassByName(val, eclasses);
 						}
 					}
 					eattr.setEType(attrType);
+					
 					eattr.setName(key);
 					ecl.getEStructuralFeatures().add(eattr);
+					
 				}
+					
+					
+					
+				// process operations
+				System.err.println("process operations. class " + cl.classType + " has " + cl.methods.size() + " methods");
+				for (AscMethod met : cl.methods) {
+					EOperation eop = fact.createEOperation();
+					
+					// operation name
+					eop.setName(met.getMethodName());
+					
+					// operation return type
+					EClassifier returnType = null;
+					if (met.getMethodReturnType() != null && met.getMethodReturnType().trim().length() != 0) {
+						returnType = getEClassifierByName(met.getMethodReturnType().trim(), eclasses, eenums);
+					}
+					eop.setEType(returnType);
+					
+					// operation parameters
+					if (met.getMethodParams() != null) {
+						for (Entry<String, String> param : met.getMethodParams().entrySet()) {
+							EParameter ep = fact.createEParameter();
+							ep.setName(param.getKey());
+							ep.setEType(getEClassifierByName(param.getValue(), eclasses, eenums));
+							eop.getEParameters().add(ep);
+						}
+					}
+					
+					System.err.println("++++++++++++++++++++++ adding operation" + eop);
+					ecl.getEOperations().add(eop);
+				}
+					
+					
+				
+				
+
+				
 							
-				eClassColors.put(cl.classColor, ecl);
-				eclasses.add(ecl);
-				pkg.getEClassifiers().add(ecl);
+				//eClassColors.put(cl.classColor, ecl);
+				//eclasses.add(ecl);
+				pkg.getEClassifiers().add(ecl);		// class is complete, add to ePackage
 			}
-		}
-		
-		
+		}		
 		
 		
 		// process edges
@@ -149,11 +223,21 @@ public class EcoreGenerator {
 				
 				System.out.println("edge " + ae.label + " start multiplicity: " + ae.startMultiplicity + " end multiplicity: " + ae.endMultiplicity);
 				
-				if (ae.endMultiplicity.equals("*")) {
+				
+				
+				/*if (ae.endMultiplicity.equals("*")) {
 					ref.setUpperBound(EStructuralFeature.UNBOUNDED_MULTIPLICITY);
 				} else {
 					ref.setUpperBound(1);
-				}
+				}*/
+				
+
+				int[] multiplicities = getMultiplicityBounds(ae.endMultiplicity);
+				ref.setLowerBound(multiplicities[0]);
+				ref.setUpperBound(multiplicities[1]);
+				
+				int[] muls2 = getMultiplicityBounds(ae.startMultiplicity);
+				ref.setName(ref.getName() + "__" + muls2[0] + "_" + muls2[1]);
 				
 				try {
 				sourceClass.getEStructuralFeatures().add(ref);
@@ -186,6 +270,37 @@ public class EcoreGenerator {
 		mres.save(null);
 	}
 
+	private static EClassifier getEClassifierByName(String type, Collection<EClass> classes, Map<String,EEnum> eenums) {
+		EClassifier eclassifier = null;
+		
+		if (type != null) {
+			if (type.equalsIgnoreCase("String") || (type.equalsIgnoreCase("EString"))) {
+				eclassifier = EcorePackage.eINSTANCE.getEString();
+			} else if ((type.equalsIgnoreCase("int")) || (type.equalsIgnoreCase("Integer")) || (type.equalsIgnoreCase("EInt"))) {
+				eclassifier = EcorePackage.eINSTANCE.getEInt();
+			} else if ((type.equalsIgnoreCase("double")) || (type.equalsIgnoreCase("EDouble"))) {
+				eclassifier = EcorePackage.eINSTANCE.getEDouble();
+			} else if ((type.equalsIgnoreCase("float")) || (type.equalsIgnoreCase("EFloat"))) {
+				eclassifier = EcorePackage.eINSTANCE.getEFloat();
+			} else if ((type.equalsIgnoreCase("char")) || (type.equalsIgnoreCase("EChar"))) {
+				eclassifier = EcorePackage.eINSTANCE.getEChar();
+			} else if ((type.equalsIgnoreCase("Object")) || (type.equalsIgnoreCase("EObject"))) {
+				eclassifier = EcorePackage.eINSTANCE.getEObject();
+			} else if ((type.equalsIgnoreCase("boolean")) || (type.equalsIgnoreCase("EBoolean"))) {
+				eclassifier = EcorePackage.eINSTANCE.getEBoolean();
+			} else if ((eenums.keySet().contains(type))){
+				eclassifier = eenums.get(type);
+			} else {
+				//class type
+				System.err.println("some other type: >" + type + "<");
+				eclassifier = getClassByName(type, classes);
+			}
+		}
+		return eclassifier;
+
+	}
+	
+	
 	public static void loadAllMetaModelsFromPath(File basePath) {
 		System.out.println(basePath);
 		File[] files = basePath.listFiles();
@@ -429,6 +544,21 @@ public class EcoreGenerator {
 
 	}
 	
+	private static EClass getClassByName(String name, Collection<EClass> classes) {
+		for (EClass ecl : classes) {
+			if (name.equals(ecl.getName())) {
+				return ecl;
+			}
+		}
+		return null;
+	}
+	
+	
+	/**
+	 * Strips the first and last quote " from a String
+	 * @param s
+	 * @return
+	 */
 	private static String stripQuotes(final String s) {
 		int firstQuote = s.indexOf('"');
 		int lastQuote = s.lastIndexOf('"');
@@ -436,6 +566,37 @@ public class EcoreGenerator {
 			return s.substring(firstQuote+1, lastQuote);
 		}
 		return s;
+	}
+	
+	
+	/**
+	 * Gets the multiplicity bounds encoded by a string of the form x..y where x = number, y = number or *
+	 * @param s String
+	 * @return [0]: lower bound, [1]: upper bound. Defaults to 0,-1 (0..*)
+	 */
+	private static int[] getMultiplicityBounds(final String s) {
+		//String tmp = s.trim();
+		//String[] split = tmp.split("\\.\\.");
+		//split[0].
+		
+		int[] ret = new int[]{0, -1};
+		
+		Pattern regex = Pattern.compile("[0-9]+(\\.\\.)([0-9]+|\\*)");
+		Matcher matcher = regex.matcher(s);
+		if (matcher.find()) {
+			String extracted = matcher.group();
+			String[] split = extracted.split("\\.\\.");
+			
+			ret[0] = Integer.parseInt(split[0]);
+			
+			if (split[1].equals("*")) {
+				ret[1] = -1;
+			} else {
+				ret[1] = Integer.parseInt(split[1]);
+			}
+		}
+		
+		return ret;
 	}
 	
 	private static class TypeException extends Exception {

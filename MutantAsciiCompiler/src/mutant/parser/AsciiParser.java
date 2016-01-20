@@ -144,7 +144,7 @@ public class AsciiParser {
 					// If an edge was found, follow it
 					if (foundEdge) {
 						System.out.println("Found edge, now following");
-						ep.followLine(startx, starty, dir, array, nextCol, -1, false, false, ' ');
+						ep.followLine(startx, starty, dir, array, nextCol, -1, false, false, " ");
 					}
 				}
 			}

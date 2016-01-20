@@ -1,6 +1,8 @@
 package mutant.ascii.representation;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import mutant.util.Util;
@@ -25,6 +27,7 @@ public class AscClass {
 	public String instanceName;		// name of the instance (for abstract syntax)
 	
 	public Map<String, String> attributes = new LinkedHashMap<String, String>();
+	public List<AscMethod> methods = new ArrayList<AscMethod>();
 	public AscClass(int x1, int y1, int x2, int y2, AscChar[][] array) {
 		this.x1 = x1;
 		this.x2 = x2;

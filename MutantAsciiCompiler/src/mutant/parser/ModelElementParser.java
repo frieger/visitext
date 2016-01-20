@@ -1,10 +1,13 @@
 package mutant.parser;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import mutant.ascii.representation.AscChar;
 import mutant.ascii.representation.AscClass;
+import mutant.ascii.representation.AscMethod;
 import mutant.util.Coords;
 import mutant.util.Util;
 
@@ -15,6 +18,8 @@ import mutant.util.Util;
  */
 public class ModelElementParser {
 
+	private final static boolean ALLOW_UNTYPED_ATTRIBUTES = true;
+	
 	/**
 	 * Get model elements in abstract-syntax notation
 	 * @param array
@@ -306,6 +311,7 @@ public class ModelElementParser {
 			
 			
 			// get attributes
+			boolean processAttributes = true;
 			for (int y = attribBeginY; y < cla.length - 1; y++) { // attributes begin on the 4th line of a class
 				String tmp = "";
 				for (int x = 1; x < cla[y].length - 1; x++) {
@@ -314,24 +320,48 @@ public class ModelElementParser {
 				tmp = tmp.trim();
 				System.out.println(tmp);
 				
-				if (tmp.trim().isEmpty()) { // empty line, okay
-					
-				} else {
-					if (tmp.indexOf(':') != -1) {
-						// possibly correct syntax
-						String attribName = tmp.substring(0, tmp.indexOf(':')).trim();
-						if (attribName.isEmpty()) {
-							System.err.println(tmp + "||||Wrong syntax in attribute definition for class " + myClass.classType + " at (" + myClass.x1 + "," + myClass.y1 + "),(" + myClass.x2 + "," + myClass.y2 + "), missing TYPE for attribute. Expected attributeName : type" );
-						}
-						String attribType = tmp.substring(tmp.indexOf(':') + 1).trim();
-						System.out.println(">" + attribName + "<");
-						System.out.println(">" + attribType + "<");
-						myClass.attributes.put(attribName, attribType);
-					} else if (myClass.isEnumClass){
-						String attribName = tmp.trim();
-						myClass.attributes.put(attribName, null);
+				if (processAttributes) {	// process attributes
+					if (tmp.trim().isEmpty()) { // empty line, okay
+						
 					} else {
-						System.err.println(tmp + "||Wrong syntax in attribute definition for class " + myClass.classType + " at (" + myClass.x1 + "," + myClass.y1 + "),(" + myClass.x2 + "," + myClass.y2 + "), expected attributeName : type" );
+						if (tmp.indexOf(':') != -1) {
+							// possibly correct syntax
+							String attribName = tmp.substring(0, tmp.indexOf(':')).trim();
+							if (attribName.isEmpty()) {
+								System.err.println(tmp + "||||Wrong syntax in attribute definition for class " + myClass.classType + " at (" + myClass.x1 + "," + myClass.y1 + "),(" + myClass.x2 + "," + myClass.y2 + "), missing TYPE for attribute. Expected attributeName : type" );
+							}
+							String attribType = tmp.substring(tmp.indexOf(':') + 1).trim();
+							System.out.println(">" + attribName + "<");
+							System.out.println(">" + attribType + "<");
+							myClass.attributes.put(attribName, attribType);
+						} else if (myClass.isEnumClass){
+							String attribName = tmp.trim();
+							myClass.attributes.put(attribName, null);
+						} else if (tmp.matches("\\-+")) {
+							System.err.println(tmp + " methods follow");
+							processAttributes = false;
+						} else if (ALLOW_UNTYPED_ATTRIBUTES) {
+							String attribName = tmp.trim();
+							myClass.attributes.put(attribName, null);
+						} else {
+							System.err.println(tmp + "||Wrong syntax in attribute definition for class " + myClass.classType + " at (" + myClass.x1 + "," + myClass.y1 + "),(" + myClass.x2 + "," + myClass.y2 + "), expected attributeName : type" );
+						}
+					}
+				} else {				// process methods
+					if (tmp.trim().isEmpty()) { // empty line, okay
+						
+					} else {
+						if (tmp.indexOf('(') != -1) {
+							if (tmp.matches("\\w+\\s*\\([\\w,:\\s]*\\)\\s*(:\\s*\\w+)?")) {	// word+ '(' [word , : whitespace]* ')' whitespace* (:word+)?     -- i.e. foo() or foo(bar : x) or foo(bar : x, baz : y) or foo() : z or foo(bar : x, baz : y) : z 
+								System.err.println("found method " + tmp);
+								AscMethod theMethod = getMethodFromString(tmp);
+								System.err.println("parsed method:::" + theMethod);
+								if (theMethod != null) {
+									System.err.println("adding method" + theMethod);
+									myClass.methods.add(theMethod);
+								}
+							}
+						}
 					}
 				}
 			}
@@ -339,6 +369,116 @@ public class ModelElementParser {
 		}
 		
 		return classes;		
+	}
+	
+	
+	
+	private static AscMethod getMethodFromString(String str) {
+		if (!(str.matches("\\w+\\s*\\([\\w,:\\s]*\\)\\s*(:\\s*\\w+)?"))) {	// word+ whitespace* '(' [word , : whitespace]* ')' whitespace* (: whitespace* word+)?     -- i.e. foo() or foo(bar : x) or foo(bar : x, baz : y) or foo() : z or foo(bar : x, baz : y) : z 
+			// not a method
+			return null;
+		}
+		
+		// split the method into method name, argument list and return type
+		// to do this, split along parens
+		final String parensRegex = "[\\(\\)]";
+		final String regexMethodWithArgumentsAndNoReturnType = "\\w+\\s*\\([\\w,:\\s]*\\)\\s*";	// regex that matches methods with arguments, but no return type
+		final String regexMethodWithReturnTypeAndNoArguments = "\\w+\\s*\\(\\s*\\)\\s*(:\\s*\\w+)+"; // regex that mathces methods with no arguments, but with return type
+
+		String[] splitMethod = str.split(parensRegex);		
+		
+		boolean hasArguments = false;
+		boolean hasReturnType = false;
+		
+		String rawMethodName = null;
+		String rawMethodArguments = null;
+		String rawMethodReturnType = null;
+		
+		if (splitMethod.length == 1) {
+			// no arguments, no return type
+			hasArguments = false;
+			hasReturnType = false;
+			rawMethodName = splitMethod[0];
+		} else if (splitMethod.length == 2) {
+			// arguments, but no return type
+			if (str.matches(regexMethodWithArgumentsAndNoReturnType)) {
+				hasArguments = true;
+				hasReturnType = false;
+				rawMethodName = splitMethod[0];
+				rawMethodArguments = splitMethod[1];
+			} else {
+				System.err.println("Could not figure out if method has arguments or return type. Possible syntax error?");
+			}
+		} else if (splitMethod.length == 3) {
+			if (str.matches(regexMethodWithReturnTypeAndNoArguments)) {	// needs to be here because split makes empty string when no arguments are used
+				hasArguments = false;
+				hasReturnType = true;
+				rawMethodName = splitMethod[0];
+				rawMethodReturnType = splitMethod[2];
+			} else {
+				// arguments and return type
+				hasArguments = true;
+				hasReturnType = true;
+				
+				rawMethodName = splitMethod[0];
+				rawMethodArguments = splitMethod[1];
+				rawMethodReturnType = splitMethod[2];
+			}
+		}
+		
+		System.err.println("getMethodFromString :: " + splitMethod.length + " name:<" + rawMethodName + "> args:<" + rawMethodArguments + "> retType:<" + rawMethodReturnType + ">");
+		
+		String methodName = rawMethodName.trim();
+		
+		String methodReturnType = null;
+		if (hasReturnType) {
+			// Now extract return type
+			// in order to do his, we split the return type string (whitespace* : whitespace* word+) along as many non-word characters as possible
+			// the result is that the first entry contains an empty string or whitespace, and the second entry contains the word
+			methodReturnType = rawMethodReturnType.split("[^\\w]+")[1];
+		}
+		
+		
+		HashMap<String, String> paramToTypeMap = new HashMap<String, String>();
+
+		if (hasArguments) {
+			// Now extract the arguments
+			// in order to do this, we first split the argument string along commas with greedy whitespace
+			String[] argumentString = rawMethodArguments.split("\\s*,\\s*");
+			
+			// now, we split each string along colons to separate the name from the type
+			for (String arg : argumentString) {
+				if (!arg.matches("\\s*\\w+\\s*:\\s*\\w+\\s*")) {	
+					// quick syntax check: does parameter match the pattern whitespace* word+ whitespace* : whitespace* word+ whitespace*
+					// if not, throw error and return null
+					System.err.println("Method parameter failed syntax check: >" + arg + "< in method >" + methodName);
+					return null;
+				}
+				
+				String[] argStrTmp = arg.split("\\s*:\\s*");
+				String argName = argStrTmp[0].trim();
+				String argType = argStrTmp[1].trim();
+				
+				paramToTypeMap.put(argName, argType);
+			}
+		}
+		
+		
+		// now build AscMethod intermediate method representation
+		AscMethod ret = null;
+		
+		if (hasArguments && hasReturnType) {
+			ret = new AscMethod(methodName, paramToTypeMap, methodReturnType);
+		} else if (hasArguments && !hasReturnType) {
+			ret = new AscMethod(methodName, paramToTypeMap);
+		} else if (!hasArguments && hasReturnType) {
+			ret = new AscMethod(methodName, methodReturnType);
+		} else if (!hasArguments && !hasReturnType) {
+			ret = new AscMethod(methodName);
+		}
+		
+		return ret;
+		
 	}
 
 }

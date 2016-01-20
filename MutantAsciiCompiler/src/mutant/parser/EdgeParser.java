@@ -16,13 +16,15 @@ import mutant.util.Util;
 public class EdgeParser {
 
 	public static boolean DEBUG = false;
+	private static final int MULTIPLICITY_STRING_LENGTH = 8;
+	private final String MULTIPLICITY_REGEX = "\\s*[0-9]+(\\.\\.)([0-9]+|\\*)" + "(\\s*.*)|((\\+|\\|).*)"; // should match multiplicities in the form of '(whitespace)* x..y'   where x = number, y = number or *.   Second part should match greedy whitespace followed by any characters or ( + or | (class vertices and edges) followed by any characters)  
 	
 	private ArrayList<AscEdge> edges = new ArrayList<AscEdge>();		// list of all edges
 	private ArrayList<String> lineNames = new ArrayList<String>();		// list of all line names
 	private ArrayList<String> signalNames = new ArrayList<String>();		// list of all signal names
 	private ArrayList<AscSig> signals = new ArrayList<AscSig>();			// list of all signals
 
-	
+
 
 	public ArrayList<String> getSignalNames() {
 		return signalNames;
@@ -223,8 +225,14 @@ public class EdgeParser {
 		
 		// figure out multiplicity at start
 		
-		char startMul = 0;
+		//char startMul = 0;
+		String startMul = "";
 		
+		//Util.printArray(mulNeigh);
+		
+		//System.err.println("edge parsing::::\n>" + Util.extractString(10, 1, 8, mulNeigh, false) + "<  r >" + Util.extractString(10, 1, 8, mulNeigh, true)+"<");
+		
+		/*
 		if (currentDirection == Direction.NORTH || currentDirection == Direction.SOUTH) {
 			// multiplicity is left or right
 			char mulLeft = startNeigh[1][0].c;
@@ -242,10 +250,62 @@ public class EdgeParser {
 			} else if (mulBot == '*' || mulBot == '1') {
 				startMul = mulBot;
 			}
-		}
+		}*/
+		
+
+		startMul = getMultiplicity(startx, starty, currentDirection, false, array);
+		
+		System.err.println("figured out multiplicity: " + startMul);
 		
 		followLine(startx, starty, currentDirection, array, lineColor, startColor, isContainment, isInheritance, startMul);
 		
+	}
+	
+	
+	private String getMultiplicity(int startx, int starty, Direction currentDirection, boolean isOutgoingEdge, AscChar[][] array) {
+		
+		String startMul = "";
+		AscChar[][] mulNeigh = Util.subArray(startx-MULTIPLICITY_STRING_LENGTH, starty-1, startx+MULTIPLICITY_STRING_LENGTH, starty+1, array);
+		
+		// if isOutgoingEdge is set, need to reverse W/E 
+		if (currentDirection == Direction.NORTH || currentDirection == Direction.SOUTH) {
+			// multiplicity is left or right
+			String mulLeft = Util.extractString(MULTIPLICITY_STRING_LENGTH, 1, MULTIPLICITY_STRING_LENGTH, mulNeigh, true);
+			String mulRight = Util.extractString(MULTIPLICITY_STRING_LENGTH+1, 1, MULTIPLICITY_STRING_LENGTH, mulNeigh, false);
+			System.err.println("\n\n\nNS_mulleft:~" + mulLeft + "~right~" + mulRight + "~");
+			if (mulLeft.matches(MULTIPLICITY_REGEX)) {
+				startMul = mulLeft;
+			} else if (mulRight.matches(MULTIPLICITY_REGEX)) {
+				startMul = mulRight;
+			}
+		} else if ((!isOutgoingEdge && currentDirection == Direction.EAST) | (isOutgoingEdge && currentDirection == Direction.WEST)) {
+			// +-----------+ mul
+			// | Class     |<-------
+			// +-----------+ mul
+			String mulTop = Util.extractString(MULTIPLICITY_STRING_LENGTH, 0, MULTIPLICITY_STRING_LENGTH, mulNeigh, false);
+			String mulBot = Util.extractString(MULTIPLICITY_STRING_LENGTH, 2, MULTIPLICITY_STRING_LENGTH, mulNeigh, false);
+			System.err.println("\n\n\nE_multop:~" + mulTop + "~bot~" + mulBot + "~");
+			if (mulTop.matches(MULTIPLICITY_REGEX)) {
+				startMul = mulTop;
+			} else if (mulBot.matches(MULTIPLICITY_REGEX)) {
+				startMul = mulBot;
+			}
+		} else if ((!isOutgoingEdge && currentDirection == Direction.WEST) | (isOutgoingEdge && currentDirection == Direction.EAST)) {
+			//           mul+----------+
+			//------------->| Class    |
+			//          mul +----------+
+			String mulTop = Util.extractString(MULTIPLICITY_STRING_LENGTH+1, 0, MULTIPLICITY_STRING_LENGTH, mulNeigh, true);
+			String mulBot = Util.extractString(MULTIPLICITY_STRING_LENGTH+1, 2, MULTIPLICITY_STRING_LENGTH, mulNeigh, true);
+			System.err.println("\n\n\nW_multop:~" + mulTop + "~bot~" + mulBot + "~");
+			if (mulTop.matches(MULTIPLICITY_REGEX)) {
+				startMul = mulTop;
+			} else if (mulBot.matches(MULTIPLICITY_REGEX)) {
+				startMul = mulBot;
+			}
+		}
+		
+		
+		return startMul;
 	}
 
 	/**
@@ -261,7 +321,7 @@ public class EdgeParser {
 	 * @param _isInheritance	is this line an inheritance edge
 	 * @param _startMul			multiplicity at the start of the line
 	 */
-	public void followLine(int startx, int starty, Direction startDir, AscChar[][] array, int lineColor, int _startColor, boolean _isContainment, boolean _isInheritance, char _startMul) {
+	public void followLine(int startx, int starty, Direction startDir, AscChar[][] array, int lineColor, int _startColor, boolean _isContainment, boolean _isInheritance, String _startMul) {
 		AscChar[][] startNeigh = Util.get8Neigh(startx, starty, array);
 		
 		String lineSignalName = null;
@@ -277,9 +337,8 @@ public class EdgeParser {
 		boolean isContainment = _isContainment; // is the edge a containment edge (i.e. one that looks like #--->)
 		boolean isInheritance = _isInheritance; // is the edge an inheritance edge (i.e. one that looks like A
 	
-		char startMul = _startMul;
-		char endMul = 0;
-		
+		String startMul = _startMul;
+		String endMul = "";
 		// ----------
 		
 		int currx = startx;
@@ -443,11 +502,14 @@ public class EdgeParser {
 					isContainment = true;
 					char mulLeft = currNeigh[1][0].c;
 					char mulRight = currNeigh[1][2].c;
+					/*
 					if (mulLeft == '*' || mulLeft == '1') {
 						endMul = mulLeft;
 					} else if (mulRight == '*' || mulRight == '1') {
 						endMul = mulRight;
-					}
+					} */
+					endMul = getMultiplicity(currx, curry, currentDirection, true, array);
+
 					endColor = currNeigh[0][1].color;
 					// found end
 				} else if (midChar.c == '-' && midChar.color != 0) { 
@@ -456,13 +518,15 @@ public class EdgeParser {
 					foundEnd = true;
 					endColor = midChar.color;
 					
+					/*
 					char mulLeft = currNeigh[2][0].c;	// we are ON the class, so look one line below for multiplicity
 					char mulRight = currNeigh[2][2].c;
 					if (mulLeft == '*' || mulLeft == '1') {
 						endMul = mulLeft;
 					} else if (mulRight == '*' || mulRight == '1') {
 						endMul = mulRight;
-					}
+					}*/
+					endMul = getMultiplicity(currx, curry, currentDirection, true, array);
 	
 				} else if (midChar.c == ' ') {
 					// dead end?!
@@ -529,11 +593,14 @@ public class EdgeParser {
 					isContainment = true;
 					char mulLeft = currNeigh[1][0].c;
 					char mulRight = currNeigh[1][2].c;
+					/*
 					if (mulLeft == '*' || mulLeft == '1') {
 						endMul = mulLeft;
 					} else if (mulRight == '*' || mulRight == '1') {
 						endMul = mulRight;
-					}
+					}*/
+					endMul = getMultiplicity(currx, curry, currentDirection, true, array);
+
 					endColor = currNeigh[2][1].color;
 					// found end
 				} else if (midChar.c == '-' && midChar.color != 0) { 
@@ -542,13 +609,15 @@ public class EdgeParser {
 					foundEnd = true;
 					endColor = midChar.color;
 					
+					/*
 					char mulLeft = currNeigh[0][0].c;	// we are ON the class, so look one line above for multiplicity
 					char mulRight = currNeigh[0][2].c;
 					if (mulLeft == '*' || mulLeft == '1') {
 						endMul = mulLeft;
 					} else if (mulRight == '*' || mulRight == '1') {
 						endMul = mulRight;
-					}
+					}*/
+					endMul = getMultiplicity(currx, curry, currentDirection, true, array);
 	
 				} else if (midChar.c == ' ') {
 					// dead end?!
@@ -606,11 +675,14 @@ public class EdgeParser {
 					isContainment = true;
 					char mulTop = currNeigh[0][1].c;
 					char mulBot = currNeigh[2][1].c;
+					/*
 					if (mulTop == '*' || mulTop == '1') {
 						endMul = mulTop;
 					} else if (mulBot == '*' || mulBot == '1') {
 						endMul = mulBot;
-					}
+					} */
+					endMul = getMultiplicity(currx, curry, currentDirection, true, array);
+
 					endColor = currNeigh[1][0].color;
 					// found end
 				} else if (midChar.c == '|' && midChar.color != 0) { 
@@ -619,13 +691,15 @@ public class EdgeParser {
 					foundEnd = true;
 					endColor = midChar.color;
 					
+					/*
 					char mulTop = currNeigh[0][2].c;  // we are ON the class, so look one col to the right for multiplicity
 					char mulBot = currNeigh[2][2].c;
 					if (mulTop == '*' || mulTop == '1') {
 						endMul = mulTop;
 					} else if (mulBot == '*' || mulBot == '1') {
 						endMul = mulBot;
-					}
+					}*/
+					endMul = getMultiplicity(currx, curry, currentDirection, true, array);
 	
 				} else if (midChar.c == ' ') {
 					// dead end?!
@@ -681,11 +755,14 @@ public class EdgeParser {
 					isContainment = true;
 					char mulTop = currNeigh[0][1].c;
 					char mulBot = currNeigh[2][1].c;
+					/*
 					if (mulTop == '*' || mulTop == '1') {
 						endMul = mulTop;
 					} else if (mulBot == '*' || mulBot == '1') {
 						endMul = mulBot;
-					}
+					}*/
+					endMul = getMultiplicity(currx, curry, currentDirection, true, array);
+
 					endColor = currNeigh[1][2].color;
 					// found end
 				} else if (midChar.c == '|' && midChar.color != 0) { 
@@ -693,14 +770,16 @@ public class EdgeParser {
 					System.out.println("Found a class!");
 					foundEnd = true;
 					endColor = midChar.color;
-					
+					/*
 					char mulTop = currNeigh[0][0].c;  // we are ON the class, so look one col to the left for multiplicity
 					char mulBot = currNeigh[2][0].c;
 					if (mulTop == '*' || mulTop == '1') {
 						endMul = mulTop;
 					} else if (mulBot == '*' || mulBot == '1') {
 						endMul = mulBot;
-					}
+					}*/
+					endMul = getMultiplicity(currx, curry, currentDirection, true, array);
+
 				} else if (midChar.c == ' ') {
 					// dead end?!
 				} else {

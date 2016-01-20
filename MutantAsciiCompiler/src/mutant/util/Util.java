@@ -1,5 +1,6 @@
 package mutant.util;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import mutant.ascii.representation.AscChar;
@@ -104,6 +105,17 @@ public class Util {
 		return result;
 	}
 
+	/*
+	public static List<AscChar[]> getAreaAroundPoint(int x, int y, AscChar[][] array) {
+		List<AscChar[]> res = new ArrayList<AscChar[]>();
+		
+		AscChar[] resN = new AscChar[10];
+		for(int yy = 0; yy < 10; yy++)
+		
+		return res;
+	} */
+	
+	
 	/**
 	 * Extracts sub-array
 	 * @param x1 top left coordinates
@@ -111,13 +123,23 @@ public class Util {
 	 * @param x2 bottom right coordinates
 	 * @param y2 bottom right coordinates
 	 * @param origin input array
-	 * @return subarray
+	 * @return subarray -- indices out of bounds are padded with space ' '
 	 */
 	public static AscChar[][] subArray(int x1, int y1, int x2, int y2, AscChar[][] origin) {
+		System.out.println("subarray: " + x1 + ", " + y1 + " -- " + x2 + "," + y2 + "   origin:" + origin.length + "," + origin[0].length);
 		AscChar[][] array = new AscChar[y2-y1+1][x2-x1+1];
 		for (int y = 0; y < array.length; y++) {
 			for (int x = 0; x < array[0].length; x++) {
-				array[y][x] = origin[y1+y][x1+x];
+				if ((y1+y < origin.length) &&
+						(x1+x < origin[0].length) &&
+						(y1+y >= 0) &&
+						(x1+x >= 0)) {
+					//System.out.println("!");
+					array[y][x] = origin[y1+y][x1+x];
+				} else {
+					// pad array
+					array[y][x] = new AscChar(' ');
+				}
 			}
 		}
 		return array;
@@ -194,6 +216,53 @@ public class Util {
 			}
 		}
 		return null;
+	}
+	
+	/**
+	 * Extracts a string from an AscChar array. Strings are always extracted horizontally.
+	 * @param startx x position of the array where the string begins or ends, depending on the reverse flag
+	 * @param starty y position of the array where the string begins and ends
+	 * @param length length of string to extract.
+	 * @param array	array from which the string is to be extracted
+	 * @param extractFromLeft if this flag is set, extraction is done from x-length to x. If this flag is cleared, extraction is done from x to x+length
+	 * @return
+	 */
+	public static String extractString(int startx, int starty, int length, AscChar[][] array, boolean extractFromLeft) {
+		String tmp = "";
+		
+		//int incr;
+		/*if (extractFromLeft) {
+			incr = -1;
+		} else {
+			incr = 1;
+		}
+		
+		for (int i = 0; i < length; i++) {
+			if ((startx+i*incr) < 0 || (startx+i*incr) > array[0].length) {
+				break;
+			}
+			tmp += array[starty][startx+i*incr];
+		}
+		
+		return tmp;*/
+		
+		if (extractFromLeft) {
+			for(int i = 0; i < length; i++) {
+				if ((startx-i) < 0 || (startx-i) > array[0].length) {
+					break;
+				}
+				tmp += array[starty][startx-length + i];
+			}
+		} else {
+			for (int i = 0; i < length; i++) {
+				if ((startx+i) < 0 || (startx+1) > array[0].length) {
+					break;
+				}
+				tmp += array[starty][startx + i];
+			}
+		}
+		
+		return tmp;
 	}
 
 
