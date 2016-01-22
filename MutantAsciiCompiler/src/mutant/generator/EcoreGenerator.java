@@ -212,6 +212,7 @@ public class EcoreGenerator {
 		
 		
 		// process edges
+		Map<AscEdge, EReference> tmpAllBidiEdges = new HashMap<AscEdge, EReference>();
 		for(AscEdge ae : edges) {
 			if (!ae.isInheritance) {
 				EReference ref = fact.createEReference();
@@ -238,6 +239,16 @@ public class EcoreGenerator {
 				
 				int[] muls2 = getMultiplicityBounds(ae.startMultiplicity);
 				ref.setName(ref.getName() + "__" + muls2[0] + "_" + muls2[1]);
+				
+				if (ae.oppositeEdge != null) {
+					if (tmpAllBidiEdges.containsKey(ae.oppositeEdge)) {
+						EReference oppositeEdge = tmpAllBidiEdges.get(ae.oppositeEdge);
+						ref.setEOpposite(oppositeEdge);
+						oppositeEdge.setEOpposite(ref);
+					} else {
+						tmpAllBidiEdges.put(ae, ref);
+					}
+				}
 				
 				try {
 				sourceClass.getEStructuralFeatures().add(ref);
@@ -594,6 +605,8 @@ public class EcoreGenerator {
 			} else {
 				ret[1] = Integer.parseInt(split[1]);
 			}
+		} else {
+			System.err.println("problem with multiplicity: have >" + s + "<");
 		}
 		
 		return ret;

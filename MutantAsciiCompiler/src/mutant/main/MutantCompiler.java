@@ -12,6 +12,7 @@ import org.eclipse.emf.common.util.URI;
 
 import mutant.ascii.representation.AscChar;
 import mutant.ascii.representation.AscClass;
+import mutant.debug.ui.ArrayVisualizer;
 import mutant.generator.EcoreGenerator;
 import mutant.main.MutantModelInfo.MutantType;
 import mutant.parser.AsciiParser;
@@ -347,6 +348,13 @@ public class MutantCompiler {
 				// connect signal edges and desugar multi-edges to multiple edges
 				ep.connectSignalEdges();
 	
+				// Try to find as-yet unconnected edges (bidirectional edges)
+				AsciiParser.detectAndFollowBidirectionalEdges(inputArray, ep);
+				
+				// show visualization
+				ArrayVisualizer av = new ArrayVisualizer(inputArray, classes, ep);
+				
+				
 				// generate ecore
 				if (info.mutantType == MutantType.CLASS) {
 					URI modelUri = URI.createURI("file:///" + basePath + File.separator + modelDirectory + File.separator + modelFilename + ".ecore");

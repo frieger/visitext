@@ -25,6 +25,8 @@ public class AscEdge {
 	public String startMultiplicity = "";
 	public String endMultiplicity = "";
 	
+	public AscEdge oppositeEdge = null;
+	
 	
 	public AscEdge(int startx, int starty, int endx, int endy, int lineColor, int startColor, int endColor, String label, String signalName) {
 		this.startx = startx;
