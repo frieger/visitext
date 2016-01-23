@@ -136,7 +136,7 @@ public class EcoreGenerator {
 					EAttribute eattr = fact.createEAttribute();
 					EClassifier attrType = null;
 					
-					boolean createAttribute = true;
+
 					if (val != null) {
 						if (val.equalsIgnoreCase("String") || (val.equalsIgnoreCase("EString"))) {
 							attrType = EcorePackage.eINSTANCE.getEString();
@@ -161,6 +161,18 @@ public class EcoreGenerator {
 						}
 					}
 					eattr.setEType(attrType);
+
+					// XXX: Visibility is not relevant for ecore
+					Visibility attributeVisibility = Visibility.DEFAULT;
+					// attribute visibility
+					if (key.matches("\\s*\\+\\s*\\w+")) {
+						// attribute is public
+						attributeVisibility = Visibility.PUBLIC;
+						key = key.split("\\+\\s*", 2)[1];
+					} else if (key.matches("\\s*\\-\\s*\\w+")) {
+						attributeVisibility = Visibility.PRIVATE;
+						key = key.split("\\-\\s*", 2)[1];
+					}
 					
 					eattr.setName(key);
 					ecl.getEStructuralFeatures().add(eattr);
@@ -646,6 +658,13 @@ public class EcoreGenerator {
 		}
 		
 		
+	}
+	
+	private static enum Visibility {
+		DEFAULT,
+		PRIVATE,
+		PROTECTED,
+		PUBLIC
 	}
 
 }

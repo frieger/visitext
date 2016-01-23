@@ -181,11 +181,35 @@ public class ModelElementParser {
 		
 		ArrayList<Coords> coords = new ArrayList<Coords>();
 		
-		for (int i = 0; i < array.length; i++) {
-			for (int u = 0; u < array[0].length; u++) {
-				if (array[i][u].c == '+') {
-					System.out.println("found + at " + u + ", " + i);
-					coords.add(new Coords(u, i, lineNumberAtStart + i));
+		for (int y = 0; y < array.length; y++) {
+			for (int x = 0; x < array[0].length; x++) {
+				/*if (array[y][x].c == '+') {
+					System.out.println("found + at " + x + ", " + y);
+					coords.add(new Coords(x, y, lineNumberAtStart + y));
+				}*/
+				AscChar[][] neigh = Util.get8Neigh(x,y, array);
+				// (0,0) (0,1) (0,2)
+				// (1,0) (1,1) (1,2)
+				// (2,0) (2,1) (2,2)
+				if (neigh[1][1].c == '+') {
+					int edgeCount = 0;
+					
+					if (neigh[0][1].c == '|') {
+						edgeCount++;
+					}
+					if (neigh[2][1].c == '|') {
+						edgeCount++;
+					}
+					if (neigh[1][0].c == '-') {
+						edgeCount++;
+					}
+					if (neigh[1][2].c == '-') {
+						edgeCount++;
+					}
+					// in order for the + to mark a box vertex, edgeCount needs to be exactly 2
+					if (edgeCount == 2) {
+						coords.add(new Coords(x, y, lineNumberAtStart + y));
+					}
 				}
 			}
 		}

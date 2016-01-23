@@ -17,7 +17,8 @@ public class AscEdge {
 	public String signalName; // name of the signal (abbreviated edge) this edge is connected to
 	public boolean isSignalEdge = false;
 	public boolean isInheritance = false;
-	public boolean isContainment = false;
+	public boolean isContainment = false;	// containment: #
+	public boolean isAggregation = false;	// aggregation: @
 	public int lineColor;		// color of the edge
 	public int startColor;		// color of the start element
 	public int endColor;		// color of the end element
