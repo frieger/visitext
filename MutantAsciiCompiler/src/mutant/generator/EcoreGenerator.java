@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,6 +19,7 @@ import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EClassifier;
+import org.eclipse.emf.ecore.EDataType;
 import org.eclipse.emf.ecore.EEnum;
 import org.eclipse.emf.ecore.EEnumLiteral;
 import org.eclipse.emf.ecore.EFactory;
@@ -37,6 +37,24 @@ import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.emf.ecore.xmi.XMIResource;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
 import org.eclipse.emf.ecore.xmi.impl.XMLResourceFactoryImpl;
+import org.eclipse.uml2.uml.AggregationKind;
+import org.eclipse.uml2.uml.Association;
+import org.eclipse.uml2.uml.Class;
+import org.eclipse.uml2.uml.Classifier;
+import org.eclipse.uml2.uml.DataType;
+import org.eclipse.uml2.uml.Enumeration;
+import org.eclipse.uml2.uml.EnumerationLiteral;
+import org.eclipse.uml2.uml.Model;
+import org.eclipse.uml2.uml.Operation;
+import org.eclipse.uml2.uml.Package;
+import org.eclipse.uml2.uml.Parameter;
+import org.eclipse.uml2.uml.ParameterDirectionKind;
+import org.eclipse.uml2.uml.PrimitiveType;
+import org.eclipse.uml2.uml.Property;
+import org.eclipse.uml2.uml.Type;
+import org.eclipse.uml2.uml.UMLFactory;
+import org.eclipse.uml2.uml.VisibilityKind;
+import org.eclipse.uml2.uml.resources.util.UMLResourcesUtil;
 
 /**
  * 
@@ -48,6 +66,11 @@ public class EcoreGenerator {
 	private static Map<String, EPackage> namespaceUriToEPackageMap = new HashMap<String, EPackage>();
 	
 	private static boolean embedSchemaLocationUri = false;
+	private static final boolean createMissingEdataTypesInAttributes = true;
+	private static final boolean createMissingEdataTypesInOperations = true;
+	private static final boolean createMissingUmlDataTypesInAttributes = true;
+	private static final boolean createMissingUmlDataTypesInOperations = true;
+
 
 	/**
 	 * Configure the Ecore Generator
@@ -74,6 +97,7 @@ public class EcoreGenerator {
 		List<EClass> eclasses = new ArrayList<EClass>();
 		Map<Integer, EClass> eClassColors = new HashMap<Integer, EClass>();		// class colors of eclasses
 		Map<String, EEnum> eenums = new HashMap<String, EEnum>();				// enum name and eenum object
+		Map<String, EDataType> edatatypes = new HashMap<String, EDataType>();	// edatatypes
 		
 		// we first need to process all enums
 		for (AscClass en : classes) {
@@ -95,15 +119,7 @@ public class EcoreGenerator {
 				eenums.put(en.classType, een);
 				pkg.getEClassifiers().add(een);
 			}
-		}
-		
-	
-		
-		// this hashmap is used to defer attribute type resolution for attributes which have "class" types
-		// The map is structured as follows:
-		// class -> (attributeName, attributeType)
-		//HashMap<AscClass, Entry<String, String>> deferredAttributeTypes = new HashMap<AscClass, Entry<String, String>>();
-		
+		}		
 		
 		// create all classes. This is later used for parameter type resolution
 		for (AscClass cl : classes) {
@@ -127,7 +143,7 @@ public class EcoreGenerator {
 				//EClass ecl = fact.createEClass();
 				//ecl.setName(cl.classType);
 				//ecl.setAbstract(cl.isAbstractClass);
-				EClass ecl = getClassByName(cl.classType, eclasses);
+				EClass ecl = getEClassByName(cl.classType, eclasses);
 				
 				// process attributes
 				for (Entry<String, String> attr : cl.attributes.entrySet()) {
@@ -152,12 +168,19 @@ public class EcoreGenerator {
 							attrType = EcorePackage.eINSTANCE.getEObject();
 						} else if ((val.equalsIgnoreCase("boolean")) || (val.equalsIgnoreCase("EBoolean"))) {
 							attrType = EcorePackage.eINSTANCE.getEBoolean();
-						} else if ((eenums.keySet().contains(val))){
+						} else if ((eenums.keySet().contains(val))) {
 							attrType = eenums.get(val);
+						} else if (createMissingEdataTypesInAttributes && (edatatypes.keySet().contains(val))) {
+							attrType = edatatypes.get(val);
 						} else {
 							// attribute has class type -- not supported by ecore
-							System.err.println("attribute has some other type: " + key +"->" + val);
-							//attrType = getClassByName(val, eclasses);
+							if (createMissingEdataTypesInAttributes) {
+								EDataType newType = fact.createEDataType();
+								newType.setName(val);
+								edatatypes.put(val, newType);
+							} else {
+								System.err.println("attribute has some other type: " + key +"->" + val);
+							}
 						}
 					}
 					eattr.setEType(attrType);
@@ -192,7 +215,7 @@ public class EcoreGenerator {
 					// operation return type
 					EClassifier returnType = null;
 					if (met.getMethodReturnType() != null && met.getMethodReturnType().trim().length() != 0) {
-						returnType = getEClassifierByName(met.getMethodReturnType().trim(), eclasses, eenums);
+						returnType = getEClassifierByName(met.getMethodReturnType().trim(), eclasses, eenums, edatatypes);
 					}
 					eop.setEType(returnType);
 					
@@ -201,7 +224,7 @@ public class EcoreGenerator {
 						for (Entry<String, String> param : met.getMethodParams().entrySet()) {
 							EParameter ep = fact.createEParameter();
 							ep.setName(param.getKey());
-							ep.setEType(getEClassifierByName(param.getValue(), eclasses, eenums));
+							ep.setEType(getEClassifierByName(param.getValue(), eclasses, eenums, edatatypes));
 							eop.getEParameters().add(ep);
 						}
 					}
@@ -250,7 +273,7 @@ public class EcoreGenerator {
 				ref.setUpperBound(multiplicities[1]);
 				
 				int[] muls2 = getMultiplicityBounds(ae.startMultiplicity);
-				ref.setName(ref.getName() + "__" + muls2[0] + "_" + muls2[1]);
+				//ref.setName(ref.getName() + "__" + muls2[0] + "_" + muls2[1] + ae.isAggregation);
 				
 				if (ae.oppositeEdge != null) {
 					if (tmpAllBidiEdges.containsKey(ae.oppositeEdge)) {
@@ -277,6 +300,11 @@ public class EcoreGenerator {
 		}
 		
 		
+		// add all edatatypes
+		pkg.getEClassifiers().addAll(edatatypes.values());
+		
+		
+		
 		for (EClass ecl: eclasses) {
 			System.out.println(ecl);
 		}
@@ -292,8 +320,310 @@ public class EcoreGenerator {
 		
 		mres.save(null);
 	}
+	
+	/**
+	 * Generates an UML class model from the input
+	 * @param classes	list of classes
+	 * @param edges		list of edges
+	 * @param outputUri	URI of the generated model 
+	 * @throws IOException
+	 */
+	public static void generateUmlClassModel(String packageName, List<AscClass> classes, List<AscEdge> edges, URI outputUri) throws IOException {
+		Model model = UMLFactory.eINSTANCE.createModel();
+		model.setName("packageName");	
+		// package
+		Package pkg = UMLFactory.eINSTANCE.createPackage();
+		pkg.setName(packageName);
 
-	private static EClassifier getEClassifierByName(String type, Collection<EClass> classes, Map<String,EEnum> eenums) {
+		List<Class> umlClasses = new ArrayList<Class>();
+		Map<Integer, Class> umlClassColors = new HashMap<Integer, Class>();
+		Map<String, Enumeration> umlEnums = new HashMap<String, Enumeration>();
+		Map<String, DataType> umlDataTypes = new HashMap<String, DataType>();
+		
+		// populate the umlDataTypes map with some primitive data types
+		String[] standardPrimitiveDataTypes = new String[]{"int", "Integer", "long", "Long", 
+						"double", "Double", "float", "Float", "byte", "Byte", "char", "Character", 
+						"boolean", "Boolean", "Object"};
+		
+		for (String s : standardPrimitiveDataTypes) {
+			PrimitiveType pt = (PrimitiveType) pkg.createOwnedPrimitiveType(s);
+			umlDataTypes.put(s, pt);
+		}
+		
+		// we first need to process all enums
+		for (AscClass en : classes) {
+			if (en.isEnumClass) {
+				Enumeration enumeration = pkg.createOwnedEnumeration(en.classType);
+			
+				int nextEnumValue = 0;
+				for (Entry<String, String> enumLiteral : en.attributes.entrySet()) {
+					String enumLiteralString = enumLiteral.getKey();
+
+					EnumerationLiteral el = enumeration.createOwnedLiteral(enumLiteralString);
+					// TODO: Set enumeration literal value
+					//lit.setValue(nextEnumValue);
+					//nextEnumValue++;
+					
+				}
+				
+				umlEnums.put(en.classType, enumeration);
+			}
+		}		
+		
+		// create all classes. This is later used for parameter type resolution
+		for (AscClass cl : classes) {
+			if (cl.isEnumClass) {
+				// class is enum, already processed
+			} else {
+				// class is not enum
+				Class clazz;
+				if (cl.isAbstractClass) {
+					clazz = pkg.createOwnedClass(cl.classType, true);
+				} else {
+					clazz = pkg.createOwnedClass(cl.classType, false);
+				}
+				
+				umlClassColors.put(cl.classColor, clazz);
+				umlClasses.add(clazz);
+			}
+		}
+		
+		// now process the rest of the classes
+		for(AscClass cl : classes) {
+			if (cl.isEnumClass) { // class is enum
+				// already processed
+			} else { // class is not enum
+				Class clazz = getUmlClassByName(cl.classType, umlClasses);
+				
+				// process attributes
+				for (Entry<String, String> attr : cl.attributes.entrySet()) {
+					String key = attr.getKey();
+					String val = attr.getValue();
+					
+					//                                           name, type, min, max
+					//Property attrib1 = cl1.createOwnedAttribute("attributeOne", pt, 0, 1);
+
+					Classifier attrType = null;
+					if (val != null) {
+						attrType = getUmlClassifierByName(val, umlClasses, umlEnums, umlDataTypes, pkg, false);
+					}
+					
+
+					Visibility attributeVisibility = Visibility.DEFAULT;
+					// attribute visibility
+					if (key.matches("\\s*\\+\\s*\\w+")) {
+						// attribute is public
+						attributeVisibility = Visibility.PUBLIC;
+						key = key.split("\\+\\s*", 2)[1];
+					} else if (key.matches("\\s*\\-\\s*\\w+")) {
+						attributeVisibility = Visibility.PRIVATE;
+						key = key.split("\\-\\s*", 2)[1];
+					}
+					
+					Property attribute;
+					if (attrType != null) {
+						attribute = clazz.createOwnedAttribute(key, attrType, 1, 1);
+					} else {
+						attribute = UMLFactory.eINSTANCE.createProperty();
+						attribute.setLower(1);
+						attribute.setUpper(1);
+						attribute.setName(key);
+						//clazz.getAttributes().add(attribute);
+						// TODO: add attribute
+					}
+
+					if (attributeVisibility == Visibility.DEFAULT) {
+						attribute.setVisibility(VisibilityKind.PACKAGE_LITERAL);
+					} else if (attributeVisibility == Visibility.PUBLIC) {
+						attribute.setVisibility(VisibilityKind.PUBLIC_LITERAL);
+					} else if (attributeVisibility == Visibility.PRIVATE) {
+						attribute.setVisibility(VisibilityKind.PRIVATE_LITERAL);
+					}
+										
+				}
+					
+					
+					
+				// process operations
+				System.err.println("process operations. class " + cl.classType + " has " + cl.methods.size() + " methods");
+				for (AscMethod met : cl.methods) {
+					//Operation op = clazz.createOwnedOperation(name, parameterNames, parameterTypes, returnType)
+					/*Operation op;
+					UMLFactory.eINSTANCE.createParameter();
+					op.getOwnedParameters().add*/
+					// operation name
+					String operationName = met.getMethodName();
+					Operation op = clazz.createOwnedOperation(operationName, null, null);
+					
+					// operation return type
+					Classifier returnType = null;
+					if (met.getMethodReturnType() != null && met.getMethodReturnType().trim().length() != 0) {
+						returnType = getUmlClassifierByName(met.getMethodReturnType().trim(), umlClasses, umlEnums, umlDataTypes, pkg, true);
+
+						Parameter returnParameter = UMLFactory.eINSTANCE.createParameter();
+						returnParameter.setDirection(ParameterDirectionKind.RETURN_LITERAL);
+						returnParameter.setName("return_value");
+						returnParameter.setType(returnType);
+						op.getOwnedParameters().add(returnParameter);
+					}
+										
+					// operation parameters
+					if (met.getMethodParams() != null) {
+						for (Entry<String, String> param : met.getMethodParams().entrySet()) {
+							Parameter up = UMLFactory.eINSTANCE.createParameter();
+							up.setName(param.getKey());
+							up.setType(getUmlClassifierByName(param.getValue(), umlClasses, umlEnums, umlDataTypes, pkg, true));
+							op.getOwnedParameters().add(up);
+						}
+					}
+					
+					System.err.println("++++++++++++++++++++++ adding operation" + op);
+				}
+										
+			}
+		}		
+		
+		
+		// process edges
+		List<AscEdge> alreadyProcessedBidirectionalEdges = new ArrayList<AscEdge>();
+		for(AscEdge ae : edges) {
+			if (!ae.isInheritance) {
+				String assocName = ae.label;
+				String sourceRolename = ae.startRolename;
+				String targetRolename = ae.endRolename;
+				
+				Class sourceClass = umlClassColors.get(ae.startColor);
+				Class targetClass = umlClassColors.get(ae.endColor);
+								
+				AggregationKind sourceAggregation = AggregationKind.NONE_LITERAL;
+				AggregationKind targetAggregation = AggregationKind.NONE_LITERAL;
+				
+				if (ae.isContainment) {
+					sourceAggregation = AggregationKind.COMPOSITE_LITERAL;
+				} else if (ae.isAggregation) {
+					sourceAggregation = AggregationKind.SHARED_LITERAL;
+				}
+				
+				
+				System.out.println("edge " + ae.label + " start multiplicity: " + ae.startMultiplicity + " end multiplicity: " + ae.endMultiplicity);				
+
+				int[] multiplicities = getMultiplicityBounds(ae.endMultiplicity);
+				int sourceMultiplicityLowerBound = multiplicities[0];
+				int sourceMultiplicityUpperBound = multiplicities[1];
+				
+				
+				int[] muls2 = getMultiplicityBounds(ae.startMultiplicity);
+				int targetMultiplicityLowerBound = muls2[0];
+				int targetMultiplicityUpperBound = muls2[1];
+
+				boolean end2Navigable = false;
+				if (ae.oppositeEdge != null && !alreadyProcessedBidirectionalEdges.contains(ae.oppositeEdge)) {
+					// bidirectional edge
+					
+					end2Navigable = true;
+					if (ae.oppositeEdge.isContainment) {
+						targetAggregation = AggregationKind.COMPOSITE_LITERAL;
+					} else if (ae.oppositeEdge.isAggregation) {
+						targetAggregation = AggregationKind.SHARED_LITERAL;
+					}
+					alreadyProcessedBidirectionalEdges.add(ae);
+				} else if (ae.oppositeEdge != null && alreadyProcessedBidirectionalEdges.contains(ae.oppositeEdge)) {
+					continue;
+				}
+				
+				System.out.println("source class: " + sourceClass + " target class: " + targetClass);
+				System.out.println("source aggr: " + sourceAggregation + " target aggr: " + targetAggregation);
+				/*
+				Association assoc = sourceClass.createAssociation(true, sourceAggregation, sourceRolename, sourceMultiplicityLowerBound, sourceMultiplicityUpperBound,
+						targetClass, end2Navigable, targetAggregation, targetRolename, targetMultiplicityLowerBound, targetMultiplicityUpperBound);
+				*/
+				Property sourceProp = UMLFactory.eINSTANCE.createProperty();
+				sourceProp.setName("src_" + targetRolename);
+				sourceProp.setLower(sourceMultiplicityLowerBound);
+				sourceProp.setUpper(sourceMultiplicityUpperBound);
+				sourceProp.setType(targetClass);
+				sourceProp.setAggregation(sourceAggregation);
+				sourceClass.getOwnedAttributes().add(sourceProp);
+				
+				Property targetProp = UMLFactory.eINSTANCE.createProperty();
+				targetProp.setName("trg_" + sourceRolename);
+				targetProp.setLower(targetMultiplicityLowerBound);
+				targetProp.setUpper(targetMultiplicityUpperBound);
+				targetProp.setType(sourceClass);
+				targetProp.setAggregation(targetAggregation);
+
+				Association assoc = UMLFactory.eINSTANCE.createAssociation();
+				assoc.getMemberEnds().add(sourceProp);
+				
+				if (end2Navigable) {
+					targetClass.getOwnedAttributes().add(targetProp);
+					assoc.getMemberEnds().add(targetProp);
+				} else {
+					assoc.getOwnedEnds().add(targetProp);
+				}
+				
+				if (assocName != null && assocName.trim().length() > 0) {
+					assoc.setName(assocName);
+				}
+				
+				pkg.getPackagedElements().add(assoc);
+				
+			} if (ae.isInheritance) {
+				System.out.println("inheritance edge " + ae);
+				Class childClass = umlClassColors.get(ae.startColor);
+				Class superClass = umlClassColors.get(ae.endColor);
+				
+				childClass.createGeneralization(superClass);				
+			}
+		}
+		
+		
+		
+		for (Class cl: umlClasses) {
+			System.out.println(cl);
+		}
+		
+		for (Type tp : pkg.getOwnedTypes()) {
+			System.out.println(tp);
+		}
+		
+        ResourceSet resourceSet = new ResourceSetImpl();
+		UMLResourcesUtil.init(resourceSet);
+		Resource res = resourceSet.createResource(outputUri);
+		res.getContents().add(pkg);
+		
+		res.save(null);
+
+	}
+
+	private static Classifier getUmlClassifierByName(String type, Collection<Class> classes, Map<String,Enumeration> enums, Map<String, DataType> datatypes, Package pkg, boolean inOperation) {
+		Classifier classifier = null;
+		
+		if (type != null) {
+			if ((enums.keySet().contains(type))){
+				classifier = enums.get(type);
+			} else if ((datatypes.keySet().contains(type))) {
+				classifier = datatypes.get(type);
+			} else {
+				//class type
+				System.err.println("some other type: >" + type + "<");
+				classifier = getUmlClassByName(type, classes);
+				if (classifier == null && 
+						((createMissingUmlDataTypesInOperations && inOperation) || 
+								(createMissingUmlDataTypesInAttributes && !inOperation))) {
+					// couldn't find classifier, create it and add it to the edatatypes map
+					//EDataType ed = EcoreFactory.eINSTANCE.createEDataType();
+					PrimitiveType pt = (PrimitiveType) pkg.createOwnedPrimitiveType(type);
+					datatypes.put(type, pt);
+					classifier = pt;
+				}
+			}
+		}
+		return classifier;
+
+	}
+	
+	private static EClassifier getEClassifierByName(String type, Collection<EClass> classes, Map<String,EEnum> eenums, Map<String, EDataType> edatatypes) {
 		EClassifier eclassifier = null;
 		
 		if (type != null) {
@@ -313,10 +643,18 @@ public class EcoreGenerator {
 				eclassifier = EcorePackage.eINSTANCE.getEBoolean();
 			} else if ((eenums.keySet().contains(type))){
 				eclassifier = eenums.get(type);
+			} else if ((edatatypes.keySet().contains(type))) {
+				eclassifier = edatatypes.get(type);
 			} else {
 				//class type
 				System.err.println("some other type: >" + type + "<");
-				eclassifier = getClassByName(type, classes);
+				eclassifier = getEClassByName(type, classes);
+				if (eclassifier == null && createMissingEdataTypesInOperations) {
+					// couldn't find eclassifier, create it and add it to the edatatypes map
+					EDataType ed = EcoreFactory.eINSTANCE.createEDataType();
+					ed.setName(type);
+					edatatypes.put(type, ed);
+				}
 			}
 		}
 		return eclassifier;
@@ -567,10 +905,19 @@ public class EcoreGenerator {
 
 	}
 	
-	private static EClass getClassByName(String name, Collection<EClass> classes) {
+	private static EClass getEClassByName(String name, Collection<EClass> classes) {
 		for (EClass ecl : classes) {
 			if (name.equals(ecl.getName())) {
 				return ecl;
+			}
+		}
+		return null;
+	}
+	
+	private static Class getUmlClassByName(String name, Collection<Class> classes) {
+		for (Class cl : classes) {
+			if (name.equals(cl.getName())) {
+				return cl;
 			}
 		}
 		return null;

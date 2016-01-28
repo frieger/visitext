@@ -145,7 +145,7 @@ public class AsciiParser {
 					// If an edge was found, follow it
 					if (foundEdge) {
 						System.out.println("Found edge, now following");
-						ep.followLine(startx, starty, dir, array, nextCol, -1, false, false, " ");
+						ep.followLine(startx, starty, dir, array, nextCol, -1, false, false, false, " ");
 					}
 				}
 			}
@@ -177,6 +177,10 @@ public class AsciiParser {
 		return coords;
 	}
 	
+	/**
+	 * Colors all uncolored edge labels and signal labels with the reserved color
+	 * @param input input array. Will be modified.
+	 */
 	public static void reserveColorAllLabelsAndSignals(AscChar[][] input) {
 		for (int y = 0; y < input.length; y++) {
 			boolean insideLabel = false;
@@ -199,7 +203,11 @@ public class AsciiParser {
 		}
 	}
 	
-	
+	/**
+	 * Detects and follows bidirectional edges, adding them to the EdgeParser's edge list
+	 * @param array	Input array
+	 * @param ep Edge Parser
+	 */
 	public static void detectAndFollowBidirectionalEdges(AscChar[][] array, EdgeParser ep) {
 
 		for (int y = 0; y < array.length; y++) {
@@ -209,14 +217,16 @@ public class AsciiParser {
 						AscChar[][] neigh = Util.get8Neigh(x, y, array);
 							// north
 						if (neigh[0][1].color != 0 && neigh[0][1].c == '-') {	// detected some class to the north
-							String edgeMultiplicity = ep.getMultiplicity(x, y, Direction.NORTH, true, array);
-							AscEdge theEdge = ep.followLine(x, y, Direction.SOUTH, array, Util.getNextColor(), neigh[0][1].color, false, false, edgeMultiplicity);
-							ep.makeReverseEdge(theEdge);
+							int edgeColor = Util.getNextColor();
+							String edgeMultiplicity = ep.getMultiplicity(x, y, Direction.NORTH, true, array, edgeColor);
+							AscEdge theEdge = ep.followLine(x, y, Direction.SOUTH, array, edgeColor, neigh[0][1].color, false, false, false, edgeMultiplicity);
+							ep.makeReverseEdge(theEdge, false, false);
 						} else if (neigh[2][1].color != 0 && neigh[2][1].c == '-') { // detected some class to the south
 							// south
-							String edgeMultiplicity = ep.getMultiplicity(x, y, Direction.SOUTH, true, array);
-							AscEdge theEdge = ep.followLine(x, y, Direction.NORTH, array, Util.getNextColor(), neigh[2][1].color, false, false, edgeMultiplicity);
-							ep.makeReverseEdge(theEdge);
+							int edgeColor = Util.getNextColor();
+							String edgeMultiplicity = ep.getMultiplicity(x, y, Direction.SOUTH, true, array, edgeColor);
+							AscEdge theEdge = ep.followLine(x, y, Direction.NORTH, array, edgeColor, neigh[2][1].color, false, false, false, edgeMultiplicity);
+							ep.makeReverseEdge(theEdge, false, false);
 						}
 					} else if (array[y][x].c == '-') {
 						AscChar[][] neigh = Util.get8Neigh(x, y, array);
@@ -224,16 +234,80 @@ public class AsciiParser {
 						// (1,0) (1,1) (1,2)
 						// (2,0) (2,1) (2,2)
 						if (neigh[1][0].color != 0 && neigh[1][0].c == '|') { // detected some class to the west
+							int edgeColor = Util.getNextColor();
 							System.err.println("Detected some class to the west");
-							String edgeMultiplicity = ep.getMultiplicity(x, y, Direction.WEST, true, array);
-							AscEdge theEdge = ep.followLine(x, y, Direction.EAST, array, Util.getNextColor(), neigh[1][0].color, false, false, edgeMultiplicity);
-							ep.makeReverseEdge(theEdge);
+							String edgeMultiplicity = ep.getMultiplicity(x, y, Direction.WEST, true, array, edgeColor);
+							AscEdge theEdge = ep.followLine(x, y, Direction.EAST, array, edgeColor, neigh[1][0].color, false, false, false, edgeMultiplicity);
+							ep.makeReverseEdge(theEdge, false, false);
 						} else if (neigh[1][2].color != 0 && neigh[1][2].c == '|') { // detected some class to the east
-							String edgeMultiplicity = ep.getMultiplicity(x, y, Direction.EAST, true, array);
-							AscEdge theEdge = ep.followLine(x, y, Direction.WEST, array, Util.getNextColor(), neigh[1][2].color, false, false, edgeMultiplicity);
-							ep.makeReverseEdge(theEdge);
+							int edgeColor = Util.getNextColor();
+							String edgeMultiplicity = ep.getMultiplicity(x, y, Direction.EAST, true, array, edgeColor);
+							AscEdge theEdge = ep.followLine(x, y, Direction.WEST, array, edgeColor, neigh[1][2].color, false, false, false, edgeMultiplicity);
+							ep.makeReverseEdge(theEdge, false, false);
 
 						}
+					} else if (array[y][x].c == '#' || array[y][x].c == '@') {
+						// containment / aggregation needs special handling
+						System.err.println("found bidirectional containment/aggregation edge");
+						AscChar[][] neigh = Util.get8Neigh(x, y, array);
+						// (0,0) (0,1) (0,2)
+						// (1,0) (1,1) (1,2)
+						// (2,0) (2,1) (2,2)
+
+						// |         |        ---   |
+						// |#-     -#|         #    #
+						// |         |         |   ---
+						
+						boolean isContainment = (array[y][x].c == '#');
+						boolean isAggregation = (array[y][x].c == '@');
+						
+						System.err.println("character: <" + array[y][x].c + ">  " + isContainment + "  " + isAggregation);
+						
+						if (neigh[0][1].color != 0 && neigh[0][1].c == '-') {	// detected some class to the north
+							int edgeColor = Util.getNextColor();
+							String edgeMultiplicity = ep.getMultiplicity(x, y, Direction.NORTH, true, array, edgeColor);
+							//AscEdge theEdge = ep.followLine(startx, starty, startDir, array, lineColor, _startColor, _isContainment, _isInheritance, _isAggregation, _startMul)
+							AscEdge theEdge = ep.followLine(x, y, Direction.SOUTH, array, edgeColor, neigh[0][1].color, false, false, false, edgeMultiplicity);
+							/*theEdge.isContainment = isContainment;
+							theEdge.isAggregation = isAggregation;
+							
+							int otherEndX = 0;
+							int otherEndY = 0;
+							if (theEdge.startx == x && theEdge.starty == y) {
+								otherEndX = theEdge.endx;
+								otherEndY = theEdge.endy;
+							} else if (theEdge.endx == x && theEdge.endy == y) {
+								otherEndX = theEdge.startx;
+								otherEndY = theEdge.starty;
+							}
+							
+							char charAtOtherEnd = array[otherEndY][otherEndX].c;
+							boolean otherEndIsContainment = (charAtOtherEnd == '#');
+							boolean otherEndIsAggregation = (charAtOtherEnd == '@');
+							*/
+							ep.makeReverseEdge(theEdge, isContainment, isAggregation);
+						} else if (neigh[2][1].color != 0 && neigh[2][1].c == '-') { // detected some class to the south
+							// south
+							int edgeColor = Util.getNextColor();
+							String edgeMultiplicity = ep.getMultiplicity(x, y, Direction.SOUTH, true, array, edgeColor);
+							AscEdge theEdge = ep.followLine(x, y, Direction.NORTH, array, edgeColor, neigh[2][1].color, false, false, false, edgeMultiplicity);
+							
+							ep.makeReverseEdge(theEdge, isContainment, isAggregation);
+						} else if (neigh[1][0].color != 0 && neigh[1][0].c == '|') { // detected some class to the west
+							int edgeColor = Util.getNextColor();
+							String edgeMultiplicity = ep.getMultiplicity(x, y, Direction.WEST, true, array, edgeColor);
+							AscEdge theEdge = ep.followLine(x, y, Direction.EAST, array, edgeColor, neigh[1][0].color, false, false, false, edgeMultiplicity);
+							
+							ep.makeReverseEdge(theEdge, isContainment, isAggregation);
+						} else if (neigh[1][2].color != 0 && neigh[1][2].c == '|') { // detected some class to the east
+							int edgeColor = Util.getNextColor();
+							String edgeMultiplicity = ep.getMultiplicity(x, y, Direction.EAST, true, array, edgeColor);
+							AscEdge theEdge = ep.followLine(x, y, Direction.WEST, array, edgeColor, neigh[1][2].color, false, false, false, edgeMultiplicity);
+														
+							ep.makeReverseEdge(theEdge, isContainment, isAggregation);
+						}
+
+
 					}
 				}
 			}

@@ -21,7 +21,8 @@ public class MutantModelInfo {
 	
 	public enum MutantType {
 		CLASS,
-		ABSTRACT
+		ABSTRACT,
+		UML
 	}
 	
 	

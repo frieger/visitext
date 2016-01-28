@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Map.Entry;
 
+import javafx.print.Printer.MarginType;
+
 import org.eclipse.emf.common.util.URI;
 
 import mutant.ascii.representation.AscChar;
@@ -275,9 +277,14 @@ public class MutantCompiler {
 		String modelDefSubstr = mutantContents.substring(inputModelIndex, equalSignIndex);
 		String[] tokens = modelDefSubstr.split("\\s+");
 		
+		
 		MutantModelInfo info = null;
 		if (tokens.length == 3) { // concrete syntax: class
-			info = new MutantModelInfo(MutantModelInfo.MutantType.CLASS, null, tokens[1], tokens[2]);
+			if (tokens[1].equals("EPackage")) { // ecore
+				info = new MutantModelInfo(MutantModelInfo.MutantType.CLASS, null, tokens[1], tokens[2]);
+			} else if (tokens[1].equals("Package")) { // uml
+				info = new MutantModelInfo(MutantModelInfo.MutantType.UML, null, tokens[1], tokens[2]);
+			}
 		} else if (tokens.length == 4) { // abstract syntax
 			
 			String nsUri = tokens[1];
@@ -314,11 +321,12 @@ public class MutantCompiler {
 				// parse mutant model
 				EdgeParser ep = new EdgeParser();
 				
-				AscChar[][] inputArray = AsciiParser.buildArrayFromString(mutantContents);
+				AscChar[][] inputArray;
+				inputArray = AsciiParser.buildArrayFromString(mutantContents);
 				
 				// First, get classes
 				List<AscClass> classes = null;
-				if (info.mutantType == MutantType.CLASS) {
+				if (info.mutantType == MutantType.CLASS || info.mutantType == MutantType.UML) {
 					classes = ModelElementParser.getClassesConcreteSyntax(inputArray, lineNumber);
 				} else if (info.mutantType == MutantType.ABSTRACT) {
 					classes = ModelElementParser.getModelElementsAbstractSyntax(inputArray, lineNumber);
@@ -335,6 +343,7 @@ public class MutantCompiler {
 				List<Coords> arrowHeads = AsciiParser.getArrowHeadLocations(inputArray);
 	
 				Util.printArray(inputArray);
+
 				
 				// Follow the lines from arrowheads
 				for(Coords p : arrowHeads) {
@@ -342,19 +351,22 @@ public class MutantCompiler {
 					ep.followLineFromArrowhead(p.x, p.y, inputArray, Util.getNextColor());	// XXX: does this still work? if not, swap x and y
 				}
 				
+				
 				// Detect and follow signals, which might be dangling
 				AsciiParser.detectAndFollowSignals(inputArray, ep);
-				
+
 				// connect signal edges and desugar multi-edges to multiple edges
-				ep.connectSignalEdges();
+				ep.connectSignalEdges(inputArray);
 	
 				// Try to find as-yet unconnected edges (bidirectional edges)
 				AsciiParser.detectAndFollowBidirectionalEdges(inputArray, ep);
 				
+				// get rolenames for all edges
+				ep.getRolenamesForAllEdges(inputArray);
+
 				// show visualization
-				ArrayVisualizer av = new ArrayVisualizer(inputArray, classes, ep);
-				
-				
+				ArrayVisualizer av = new ArrayVisualizer(inputArray, classes, ep, "final-"+filename);
+								
 				// generate ecore
 				if (info.mutantType == MutantType.CLASS) {
 					URI modelUri = URI.createURI("file:///" + basePath + File.separator + modelDirectory + File.separator + modelFilename + ".ecore");
@@ -364,7 +376,11 @@ public class MutantCompiler {
 					URI modelUri = URI.createURI("file:///" + basePath + File.separator + modelDirectory + File.separator + modelFilename + ".xmi");
 					System.out.println("MUTANT will now generate ABSTRACT " + modelUri);
 					EcoreGenerator.generateEcoreAbstractModel(info, classes, ep.getEdges(), modelUri);
-				}
+				} else if (info.mutantType == MutantType.UML) {
+					URI modelUri = URI.createURI("file:///" + basePath + File.separator + modelDirectory + File.separator + modelFilename + ".uml");
+					System.out.println("MUTANT will now generate UML CLASS " + modelUri);					
+					EcoreGenerator.generateUmlClassModel(info.rootName, classes, ep.getEdges(), modelUri);
+				} 
 			}
 		} catch (Exception e1) {
 			// TODO Auto-generated catch block

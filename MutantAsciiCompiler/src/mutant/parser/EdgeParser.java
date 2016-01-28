@@ -1,8 +1,13 @@
 package mutant.parser;
 
 import java.util.ArrayList;
+import java.util.Map.Entry;
+import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import mutant.ascii.representation.AscChar;
+import mutant.ascii.representation.AscClass;
 import mutant.ascii.representation.AscEdge;
 import mutant.ascii.representation.AscSig;
 import mutant.util.Direction;
@@ -18,6 +23,7 @@ public class EdgeParser {
 	public static boolean DEBUG = true;
 	private static final int MULTIPLICITY_STRING_LENGTH = 8;
 	private final String MULTIPLICITY_REGEX = "\\s*[0-9]+(\\.\\.)([0-9]+|\\*)" + "(\\s*.*)|((\\+|\\|).*)"; // should match multiplicities in the form of '(whitespace)* x..y'   where x = number, y = number or *.   Second part should match greedy whitespace followed by any characters or ( + or | (class vertices and edges) followed by any characters)  
+	private final String MULTIPLICITY_SEARCH_REGEX = "[0-9]+(\\.\\.)([0-9]+|\\*)";	// regex for searching for multiplicities
 	
 	private ArrayList<AscEdge> edges = new ArrayList<AscEdge>();		// list of all edges
 	private ArrayList<String> lineNames = new ArrayList<String>();		// list of all line names
@@ -65,10 +71,11 @@ public class EdgeParser {
 	 * Which one is which does not matter.
 	 * @param e1	first edge
 	 * @param e2	second edge
+	 * @param array array with the edges. gets recolored to reflect the new edge color
 	 * @return		combined edge
 	 * @throws Exception if edges could not be combined
 	 */
-	public static AscEdge combineEdges(AscEdge e1, AscEdge e2) throws Exception {
+	public static AscEdge combineEdges(AscEdge e1, AscEdge e2, AscChar[][] array) throws Exception {
 		System.out.println("Now combining " + e1 + " and " + e2);
 		AscEdge startEdge;
 		AscEdge endEdge;
@@ -115,6 +122,12 @@ public class EdgeParser {
 		resEdge.isInheritance = isInheritance;
 		resEdge.startMultiplicity = startEdge.startMultiplicity;
 		resEdge.endMultiplicity = endEdge.endMultiplicity;
+		resEdge.startRolename = startEdge.startRolename;
+		resEdge.endRolename = endEdge.endRolename;
+		
+		if (array != null) {
+			Util.recolorArray(array, resEdge.lineColor, startEdge.lineColor, endEdge.lineColor);
+		}
 		
 		return resEdge;
 	}
@@ -124,7 +137,7 @@ public class EdgeParser {
 	 * This will modify the list of edges
 	 * @throws Exception if edges could not be connected
 	 */
-	public void connectSignalEdges() throws Exception {
+	public void connectSignalEdges(AscChar[][] array) throws Exception {
 		System.out.println("now connecting signal edges");
 		for (AscSig s : signals) {
 			System.out.println("signal: " + s.signalName + " in:" + s.incomingColors + " out:" + s.outgoingColors);
@@ -138,7 +151,7 @@ public class EdgeParser {
 				// --> create new edge that connects both edges and delete old edges
 				AscEdge e1 = Util.getEdgeForColor(s.incomingColors.get(0), edges);
 				AscEdge e2 = Util.getEdgeForColor(s.outgoingColors.get(0), edges);
-				AscEdge result = combineEdges(e1, e2);
+				AscEdge result = combineEdges(e1, e2, array);
 				edges.remove(e1);
 				edges.remove(e2);
 				edges.add(result);
@@ -149,7 +162,7 @@ public class EdgeParser {
 				AscEdge outgoing = Util.getEdgeForColor(s.outgoingColors.get(0), edges);
 				for (int inColor : s.incomingColors) {
 					AscEdge incoming = Util.getEdgeForColor(inColor, edges);
-					AscEdge result = combineEdges(outgoing, incoming);
+					AscEdge result = combineEdges(outgoing, incoming, array);
 					edges.add(result);
 					edges.remove(incoming);
 				}
@@ -161,7 +174,7 @@ public class EdgeParser {
 				AscEdge incoming = Util.getEdgeForColor(s.incomingColors.get(0), edges);
 				for (int outColor : s.outgoingColors) {
 					AscEdge outgoing = Util.getEdgeForColor(outColor, edges);
-					AscEdge result = combineEdges(outgoing, incoming);
+					AscEdge result = combineEdges(outgoing, incoming, array);
 					edges.add(result);
 					edges.remove(outgoing);
 				}
@@ -179,11 +192,11 @@ public class EdgeParser {
 				System.out.println("bidi!!! e1: sc:" + edge1.startColor + " ec:" + edge1.endColor);
 				System.out.println("bidi!!! e2: sc:" + edge2.startColor + " ec:" + edge2.endColor);
 
-				AscEdge result = combineEdges(edge1, edge2);
+				AscEdge result = combineEdges(edge1, edge2, array);
 				edges.add(result);
 				edges.remove(edge1);
 				edges.remove(edge2);
-				makeReverseEdge(result);
+				makeReverseEdge(result, false, false);	// TODO: check if we can always assume false, false here
 			}
 		}
 	}
@@ -209,6 +222,7 @@ public class EdgeParser {
 		boolean isContainment = false; // is the edge a containment edge (i.e. one that looks like #--->)
 		boolean isInheritance = false; // is the edge an inheritance edge (i.e. one that looks like A
 		//                                                                                          |
+		boolean isAggregation = false;
 		
 		// always start on an arrowhead
 		if (startNeigh[1][1].c == '>') {
@@ -246,45 +260,168 @@ public class EdgeParser {
 		
 		// figure out multiplicity at start
 		
-		//char startMul = 0;
 		String startMul = "";
-		
-		//Util.printArray(mulNeigh);
-		
-		//System.err.println("edge parsing::::\n>" + Util.extractString(10, 1, 8, mulNeigh, false) + "<  r >" + Util.extractString(10, 1, 8, mulNeigh, true)+"<");
-		
-		/*
-		if (currentDirection == Direction.NORTH || currentDirection == Direction.SOUTH) {
-			// multiplicity is left or right
-			char mulLeft = startNeigh[1][0].c;
-			char mulRight = startNeigh[1][2].c;
-			if (mulLeft == '*' || mulLeft == '1') {
-				startMul = mulLeft;
-			} else if (mulRight == '*' || mulRight == '1') {
-				startMul = mulRight;
-			}
-		} else if (currentDirection == Direction.WEST || currentDirection == Direction.EAST) {
-			char mulTop = startNeigh[0][1].c;
-			char mulBot = startNeigh[2][1].c;
-			if (mulTop == '*' || mulTop == '1') {
-				startMul = mulTop;
-			} else if (mulBot == '*' || mulBot == '1') {
-				startMul = mulBot;
-			}
-		}*/
-		
-
-		startMul = getMultiplicity(startx, starty, currentDirection, false, array);
+		startMul = getMultiplicity(startx, starty, currentDirection, false, array, lineColor);
 		
 		System.err.println("figured out multiplicity: " + startMul);
 		
-		followLine(startx, starty, currentDirection, array, lineColor, startColor, isContainment, isInheritance, startMul);
+		followLine(startx, starty, currentDirection, array, lineColor, startColor, isContainment, isInheritance, isAggregation, startMul);
 		
 	}
 	
+	/**
+	 * Add rolenames to all edges
+	 * @param array	input array
+	 */
+	public void getRolenamesForAllEdges(AscChar[][] array) {
+		for (AscEdge e : edges) {
+			computeRolenamesForEdge(e, array);
+		}
+	}
 	
-	public String getMultiplicity(int startx, int starty, Direction currentDirection, boolean isOutgoingEdge, AscChar[][] array) {
+	/**
+	 * Extract rolenames and add them to the edge.
+	 * Rolenames have to appear in an area 1 character around the edge. 
+	 * The position along the edge determines the rolename's association:
+	 * If a rolename is further to the source, it will be the source rolename. If a rolename is further to the target, it will be the target rolename.
+	 * @param edge	edge for which the rolename is computed. THIS WILL BE MODIFIED.
+	 * @param array	input array
+	 */
+	private void computeRolenamesForEdge(AscEdge edge, AscChar[][] array) {
+		class Pair<A, B> {
+			A a;
+			B b;
+			public Pair(A a, B b) {
+				super();
+				this.a = a;
+				this.b = b;
+			}
+			
+			
+		}
+		System.out.println("============== edge parser ============== for edge " + edge);
 		
+		// first, get the uncolored array. this contains regexes and rolenames
+		String unprocessedArray = Util.getColorFromArrayAsString(0, array);
+		// now we need to find all regexes and remove them
+		Pattern regex = Pattern.compile(MULTIPLICITY_SEARCH_REGEX);
+		Matcher m = regex.matcher(unprocessedArray);
+		while(m.find()) {
+			System.out.println("found" + m.group());
+			String str = m.group();
+			String repl = str.replaceAll(".", " ");
+			String tmp1 = unprocessedArray.substring(0, m.start());
+			String tmp2 = unprocessedArray.substring(m.end(), unprocessedArray.length());
+			String newUnprocessedArray = tmp1 + repl + tmp2;
+			unprocessedArray = newUnprocessedArray;
+		}
+		m = null;
+		
+		System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~");
+		System.out.println(unprocessedArray);
+		System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~");
+		
+		// now find all other texts and extract them with their position
+		ArrayList<StringPosition> otherLabels = new ArrayList<StringPosition>();
+		int line = 0;
+		Scanner sc = new Scanner(unprocessedArray);
+		while (sc.hasNextLine()) {
+			String currLine = sc.nextLine();
+			Pattern wordRegex = Pattern.compile("\\w+");
+			Matcher match = wordRegex.matcher(currLine);
+			while (match.find()) {
+				System.out.println("found " + match.group());
+				String str = match.group();
+				otherLabels.add(new StringPosition(match.start(), line, str));
+			}
+			line++;
+		}
+		sc.close();
+		
+		for (StringPosition sp : otherLabels) {
+			System.out.println(sp);
+		}
+		
+		
+		// now get the edge array and dilate it
+		int[][] arr = Util.getBinaryArrayFromString(' ', Util.getColorFromArrayAsString(edge.lineColor, array));
+		Util.printArray(arr);
+		int[][] dilated = Util.dilate(arr);
+		System.out.println(" .... dilated:");
+		Util.printArray(dilated);
+		
+		Pair<String, Integer> fromRolename = new Pair<String, Integer>(null, Integer.MAX_VALUE);
+		Pair<String, Integer> toRolename = new Pair<String, Integer>(null, Integer.MAX_VALUE);
+		
+		for (StringPosition sp : otherLabels) {
+			if ((dilated[sp.y][sp.x] == 1) || (dilated[sp.y][sp.x+sp.string.length()] == 1)) {
+				// string is inside edge sphere of influence
+				// now check distance to edge ends
+				int distanceToStart1 = Util.getDistance(edge.startx, edge.starty, sp.x, sp.y, dilated);
+				int distanceToStart2 = Util.getDistance(edge.startx, edge.starty, sp.x+sp.string.length(), sp.y, dilated);
+				int distanceToEnd1 = Util.getDistance(edge.endx, edge.endy, sp.x, sp.y, dilated);
+				int distanceToEnd2 = Util.getDistance(edge.endx, edge.endy, sp.x+sp.string.length(), sp.y, dilated);
+				int distanceToStart = Math.min(distanceToStart1, distanceToStart2);
+				int distanceToEnd = Math.min(distanceToEnd1, distanceToEnd2);
+				
+				System.out.println("distances: " + sp.string + " to start: " + distanceToStart + "  to end: " + distanceToEnd);
+				
+				if (distanceToStart < distanceToEnd) {
+					// start rolename
+					if (distanceToStart < fromRolename.b) {
+						fromRolename = new Pair<String, Integer>(sp.string, distanceToStart);
+					}
+				} else {
+					// end rolename
+					if (distanceToEnd < toRolename.b) {
+						toRolename = new Pair<String, Integer>(sp.string, distanceToEnd);
+					}
+				}
+			}
+		}
+
+		// TODO: color start and end rolenames in the array
+
+		
+		if (fromRolename.a != null) {
+			edge.startRolename  = fromRolename.a;
+		}
+		if (toRolename.a != null) {
+			edge.endRolename = toRolename.a;
+		}
+		
+	}
+	
+	private class StringPosition {
+		final int x;
+		final int y;
+		final String string;
+		
+		public StringPosition(int x, int y, String string) {
+			super();
+			this.x = x;
+			this.y = y;
+			this.string = string;
+		}
+		
+		@Override
+		public String toString() {
+			return string + " @ " + x + "," + y;
+		}
+	}
+	
+	/**
+	 * Get the multiplicity
+	 * @param startx		x coordinate of the arrowhead
+	 * @param starty		y coordinate of the arrowhead
+	 * @param currentDirection	current direction of the edge
+	 * @param isOutgoingEdge	set if the edge is an outgoing edge rather than an incoming one. This causes the implementation to look for multiplicities on the other side. 
+	 * @param array	input array
+	 * @param color	currently not used
+	 * @return detected multiplicity as a String
+	 */
+	public String getMultiplicity(int startx, int starty, Direction currentDirection, boolean isOutgoingEdge, AscChar[][] array, int color) {
+		System.err.println("get multiplicity");
 		String startMul = "";
 		AscChar[][] mulNeigh = Util.subArray(startx-MULTIPLICITY_STRING_LENGTH, starty-1, startx+MULTIPLICITY_STRING_LENGTH, starty+1, array);
 		
@@ -292,6 +429,8 @@ public class EdgeParser {
 		if (isOutgoingEdge) {
 			offset = 1;
 		}
+		
+		Pattern multiplicitySearchRegex = Pattern.compile(MULTIPLICITY_SEARCH_REGEX);
 		
 		// if isOutgoingEdge is set, need to reverse W/E 
 		if (currentDirection == Direction.NORTH || currentDirection == Direction.SOUTH) {
@@ -310,19 +449,23 @@ public class EdgeParser {
 			String mulLeft2 = Util.extractString(MULTIPLICITY_STRING_LENGTH, 1, MULTIPLICITY_STRING_LENGTH, mulNeigh, true);
 			String mulRight2 = Util.extractString(MULTIPLICITY_STRING_LENGTH+1, 1, MULTIPLICITY_STRING_LENGTH, mulNeigh, false);
 			System.err.println("\n\n\nNS_mulleft:~" + mulLeft1 + "~right~" + mulRight1 + "~");
-			if (mulLeft1.matches(MULTIPLICITY_REGEX)) {
-				startMul = mulLeft1;
-			} else if (mulRight1.matches(MULTIPLICITY_REGEX)) {
-				startMul = mulRight1;
-			} else if (mulLeft2.matches(MULTIPLICITY_REGEX)) {	// XXX: Very hacky
-				startMul = mulLeft2;
-			} else if (mulRight2.matches(MULTIPLICITY_REGEX)) {	// XXX: Very hacky
-				startMul = mulRight2;
+			
+			Matcher ml1 = multiplicitySearchRegex.matcher(mulLeft1);
+			Matcher ml2 = multiplicitySearchRegex.matcher(mulLeft2);
+			Matcher mr1 = multiplicitySearchRegex.matcher(mulRight1);
+			Matcher mr2 = multiplicitySearchRegex.matcher(mulRight2);
+			if (ml1.find()) {
+				startMul = ml1.group();
+			} else if (mr1.find()) {
+				startMul = mr1.group();
+			} else if (ml2.find()) {
+				startMul = ml2.group();
+			} else if (mr2.find()) {
+				startMul = mr2.group();
 			} else {
 				System.out.println("NS couldn't find anything");
 				Util.printArray(mulNeigh);
 				System.out.println(startx + " " + starty + " " + currentDirection + " " + isOutgoingEdge);
-				//System.exit(0);
 			}
 		} else if ((!isOutgoingEdge && currentDirection == Direction.EAST) | (isOutgoingEdge && currentDirection == Direction.WEST)) {
 			// +-----------+ mul
@@ -335,11 +478,16 @@ public class EdgeParser {
 			mulTop = mulTop.replace('|', ' ');
 			mulBot = mulBot.replace('|', ' ');
 			System.err.println("\n\n\nE_multop:~" + mulTop + "~bot~" + mulBot + "~");
-			if (mulTop.matches(MULTIPLICITY_REGEX)) {
-				startMul = mulTop;
-			} else if (mulBot.matches(MULTIPLICITY_REGEX)) {
-				startMul = mulBot;
+			
+			Matcher mt = multiplicitySearchRegex.matcher(mulTop);
+			Matcher mb = multiplicitySearchRegex.matcher(mulBot);
+			
+			if (mt.find()) {
+				startMul = mt.group();
+			} else if (mb.find()) {
+				startMul = mb.group();
 			}
+			
 		} else if ((!isOutgoingEdge && currentDirection == Direction.WEST) | (isOutgoingEdge && currentDirection == Direction.EAST)) {
 			//           mul+----------+
 			//------------->| Class    |
@@ -352,10 +500,13 @@ public class EdgeParser {
 			mulBot = mulBot.replace('|', ' ');
 
 			System.err.println("\n\n\nW_multop:~" + mulTop + "~bot~" + mulBot + "~");
-			if (mulTop.matches(MULTIPLICITY_REGEX)) {
-				startMul = mulTop;
-			} else if (mulBot.matches(MULTIPLICITY_REGEX)) {
-				startMul = mulBot;
+			Matcher mt = multiplicitySearchRegex.matcher(mulTop);
+			Matcher mb = multiplicitySearchRegex.matcher(mulBot);
+			
+			if (mt.find()) {
+				startMul = mt.group();
+			} else if (mb.find()) {
+				startMul = mb.group();
 			}
 		}
 		
@@ -376,7 +527,7 @@ public class EdgeParser {
 	 * @param _isInheritance	is this line an inheritance edge
 	 * @param _startMul			multiplicity at the start of the line
 	 */
-	public AscEdge followLine(int startx, int starty, Direction startDir, AscChar[][] array, int lineColor, int _startColor, boolean _isContainment, boolean _isInheritance, String _startMul) {
+	public AscEdge followLine(int startx, int starty, Direction startDir, AscChar[][] array, int lineColor, int _startColor, boolean _isContainment, boolean _isInheritance, boolean _isAggregation, String _startMul) {
 		AscChar[][] startNeigh = Util.get8Neigh(startx, starty, array);
 		
 		String lineSignalName = null;
@@ -391,7 +542,8 @@ public class EdgeParser {
 		
 		boolean isContainment = _isContainment; // is the edge a containment edge (i.e. one that looks like #--->)
 		boolean isInheritance = _isInheritance; // is the edge an inheritance edge (i.e. one that looks like A
-	
+		boolean isAggregation = _isAggregation; // is the edge an aggregation edge (i.e. one that looks like @--->)
+		
 		String startMul = _startMul;
 		String endMul = "";
 		// ----------
@@ -563,10 +715,17 @@ public class EdgeParser {
 					} else if (mulRight == '*' || mulRight == '1') {
 						endMul = mulRight;
 					} */
-					endMul = getMultiplicity(currx, curry, currentDirection, true, array);
+					endMul = getMultiplicity(currx, curry, currentDirection, true, array, lineColor);
 
 					endColor = currNeigh[0][1].color;
 					// found end
+				} else if (midChar.c == '@') {
+					// found end: aggregation
+					foundEnd = true;
+					isAggregation = true;
+					endMul = getMultiplicity(currx, curry, currentDirection, true, array, lineColor);
+					endColor = currNeigh[0][1].color;
+					
 				} else if (midChar.c == '-' && midChar.color != 0) { 
 					// probably found a class
 					System.out.println("Found a class!");
@@ -581,7 +740,7 @@ public class EdgeParser {
 					} else if (mulRight == '*' || mulRight == '1') {
 						endMul = mulRight;
 					}*/
-					endMul = getMultiplicity(currx, curry, currentDirection, true, array);
+					endMul = getMultiplicity(currx, curry, currentDirection, true, array, lineColor);
 	
 				} else if (midChar.c == ' ') {
 					// dead end?!
@@ -654,10 +813,16 @@ public class EdgeParser {
 					} else if (mulRight == '*' || mulRight == '1') {
 						endMul = mulRight;
 					}*/
-					endMul = getMultiplicity(currx, curry, currentDirection, true, array);
+					endMul = getMultiplicity(currx, curry, currentDirection, true, array, lineColor);
 
 					endColor = currNeigh[2][1].color;
 					// found end
+				} else if (midChar.c == '@') {
+					// found end: aggregation
+					foundEnd = true;
+					isAggregation = true;
+					endMul = getMultiplicity(currx, curry, currentDirection, true, array, lineColor);         
+					endColor = currNeigh[2][1].color;
 				} else if (midChar.c == '-' && midChar.color != 0) { 
 					// probably found a class
 					System.out.println("Found a class!");
@@ -672,7 +837,7 @@ public class EdgeParser {
 					} else if (mulRight == '*' || mulRight == '1') {
 						endMul = mulRight;
 					}*/
-					endMul = getMultiplicity(currx, curry, currentDirection, true, array);
+					endMul = getMultiplicity(currx, curry, currentDirection, true, array, lineColor);
 	
 				} else if (midChar.c == ' ') {
 					// dead end?!
@@ -736,10 +901,16 @@ public class EdgeParser {
 					} else if (mulBot == '*' || mulBot == '1') {
 						endMul = mulBot;
 					} */
-					endMul = getMultiplicity(currx, curry, currentDirection, true, array);
+					endMul = getMultiplicity(currx, curry, currentDirection, true, array, lineColor);
 
 					endColor = currNeigh[1][0].color;
 					// found end
+				}else if (midChar.c == '@') {
+					// found end: aggregation
+					foundEnd = true;
+					isAggregation = true;
+					endMul = getMultiplicity(currx, curry, currentDirection, true, array, lineColor);
+					endColor = currNeigh[1][0].color;
 				} else if (midChar.c == '|' && midChar.color != 0) { 
 					// probably found a class
 					System.out.println("Found a class!");
@@ -754,7 +925,7 @@ public class EdgeParser {
 					} else if (mulBot == '*' || mulBot == '1') {
 						endMul = mulBot;
 					}*/
-					endMul = getMultiplicity(currx, curry, currentDirection, true, array);
+					endMul = getMultiplicity(currx, curry, currentDirection, true, array, lineColor);
 	
 				} else if (midChar.c == ' ') {
 					// dead end?!
@@ -816,10 +987,16 @@ public class EdgeParser {
 					} else if (mulBot == '*' || mulBot == '1') {
 						endMul = mulBot;
 					}*/
-					endMul = getMultiplicity(currx, curry, currentDirection, true, array);
+					endMul = getMultiplicity(currx, curry, currentDirection, true, array, lineColor);
 
 					endColor = currNeigh[1][2].color;
 					// found end
+				} else if (midChar.c == '@') {
+					// found end: aggregation
+					foundEnd = true;
+					isAggregation = true;
+					endMul = getMultiplicity(currx, curry, currentDirection, true, array, lineColor);
+					endColor = currNeigh[1][2].color;
 				} else if (midChar.c == '|' && midChar.color != 0) { 
 					// probably found a class
 					System.out.println("Found a class!");
@@ -833,7 +1010,7 @@ public class EdgeParser {
 					} else if (mulBot == '*' || mulBot == '1') {
 						endMul = mulBot;
 					}*/
-					endMul = getMultiplicity(currx, curry, currentDirection, true, array);
+					endMul = getMultiplicity(currx, curry, currentDirection, true, array, lineColor);
 
 				} else if (midChar.c == ' ') {
 					// dead end?!
@@ -864,6 +1041,10 @@ public class EdgeParser {
 			}
 			if (isInheritance) {
 				myEdge.isInheritance = true;
+			}
+			if (isAggregation) {
+				myEdge.isAggregation = true;
+				System.err.println("edge is aggregation");
 			}
 			
 			myEdge.startMultiplicity = "" + endMul;
@@ -1020,13 +1201,23 @@ public class EdgeParser {
 		
 	}
 
-	
-	public void makeReverseEdge(AscEdge edge) {
+	/**
+	 * Create a reverse/opposite edge from a provided edge and add it to the edge list
+	 * @param edge	Edge that should get an opposite edge. Usually, this is one part of a bidirectional edge.
+	 * @param reverseIsContainment	if set, the reverse edge will be a containment
+	 * @param reverseIsAggregation	if set, the reverse edge will be an aggregation
+	 */
+	public void makeReverseEdge(AscEdge edge, boolean reverseIsContainment, boolean reverseIsAggregation) {
+		
+		System.err.println("make reverse edge. this edge has #=" + edge.isContainment + " @=" + edge.isAggregation + "    rev#=" + reverseIsContainment + " rev@=" + reverseIsAggregation);
+		
 		//AscEdge reverseEdge = new AscEdge(startx, starty, endx, endy, lineColor, startColor, endColor, label, signalName)
 		AscEdge reverseEdge = new AscEdge(edge.endx, edge.endy, edge.startx, edge.starty, edge.lineColor, edge.endColor, edge.startColor, edge.label, edge.signalName);
 		reverseEdge.startMultiplicity = edge.endMultiplicity;
 		reverseEdge.endMultiplicity = edge.startMultiplicity;
 		reverseEdge.oppositeEdge = edge;
+		reverseEdge.isContainment = reverseIsContainment;
+		reverseEdge.isAggregation = reverseIsAggregation;
 		edge.oppositeEdge = reverseEdge;
 		edges.add(reverseEdge);
 	}

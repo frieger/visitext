@@ -26,6 +26,9 @@ public class AscEdge {
 	public String startMultiplicity = "";
 	public String endMultiplicity = "";
 	
+	public String startRolename = null;
+	public String endRolename = null;
+	
 	public AscEdge oppositeEdge = null;
 	
 	
