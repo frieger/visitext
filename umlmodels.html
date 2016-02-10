@@ -1,0 +1,367 @@
+<html lang="en-uk">
+<head>
+<title>Model-driven Unit Testing using ASCII-art as Notational Text</title>
+<style type="text/css">
+body {font-family: monospace; font-size: 12pt; background-color:rgb(220,220,220); margin-top: 15pt}
+p {margin: 10pt; background-color: rgb(0,220,220)}
+pre {border: 1px solid rgb(80,80,80); font-family: monospace; font-size:10pt; background-color: white}
+div.linelengthindicator {position:fixed; top: 0px; background-color: rgb(240,240,240); font-family:monospace; font-size: 10pt; border-bottom: 1px solid rgb(80,80,255)}
+</style>
+</head>
+<body>
+<h1>UML classes</h1>
+
+<div class="linelengthindicator">
+<span style="color:rgb(0,192,192)" title="100 characters">1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890</span><!--100 characters--><span style="color:rgb(192,0,192)" title="120 characters">12345678901234567890</span><!--120 characters--><span style="color:rgb(160,160,160)">1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890</span>
+</div>
+
+<a href="umlmodels.zip">Download all models</a>
+<h2>Typical models</h2>
+
+
+<h2>Large models</h2>
+
+<h3>#108</h3>
+<pre>
+@Test
+/**
+ *@InputModel Package a108 =
+ * 
+Based on a class diagram by Jean-Marie Favre, http://megaplanet.org/people/JeanMarieFavre
+
+
+
+                         +-----+ 0..1
+  .----------------------|Photo|-------------------------------------------------.
+  |                     *+-----+eventPicture                                     |
+  |                                                                              |
+  |             +------------------------+                                       |         +-------+     
+  |             | Network                |                                       |         |Message|
+  |             |------------------------|                                       |         +-------+
+  |             |+name:string            |------------.                          |         
+  |             |+numberOfMembers:integer|            |                          |         +------------+
+  |             +------------------------+            |                          |         |Notification|
+  |              *^ A  A  A                           |                          |         +------------+
+  |               | |  |  |  +-----------+            |                          |
+  |               | |  |  '--|WorkNetwork|            |                          |
+  |               | |  |     +-----------+            |                          |
+  |               | |  |                              |                          |
+  |               | |  |   +-------------+            |                          |
+  |               | |  '---|SchoolNetwork|            |                          |
+  |               | |      +-------------+            |                          |
+  |               | |                                 |                          |
+  |               | |    +---------------+            |                          |
+  |               | '----|RegionalNetwork|            |                          |
+  |               |      +---------------+            |                          |
+  |               |                                   |               *+-----------------------------+
+  |  .-------.    |members                            '----------------| Event                       |
+  |  |       |   *|                                                    |-----------------------------|             +------------+
+  |  |     +------------------------+                     friendsEvents|+name:string                 |        type |EventType   |
+  |  |    *| Account                |----------------------------------|+tagline:string              |-------------|------------|
+  |  '-----|------------------------|*                                *|+host:string                 |*           1|+name:string|
+  | friends|+name:string            |guest                 markedEvents|+description:string          |             +------------+
+  |        |+email:Email            |----------------------------------|+start:DateAndTime           |                   #1
+  |        |+password:string        |*                                *|+end:DateAndTime             |                   |*
+  |        |+securityQuestion:string|administrator          ownedEvents|+location:string             |             +------------+
+  |        |+securityAnswer:string  |----------------------------------|+street:string               |             |EventSubtype|
+  |        +------------------------+*                                *|+cityOrTown:string           |-------------|------------|
+  |           #1             #0..1                                     |+phone:string                |*           1|+name:string|
+  |           |              |*                                        |+email:string                |             +------------+
+  |           |          +-------------------------------+             |+showTheGuestList:boolean    |
+  |           |          | CreditCard                    |             |+wallEnabled:boolean         |
+  |           |          |-------------------------------|             |+photosEnabled:boolean       |     +---------------+
+  |           |          |+cardHolderSName:string        |             |+onlyAdminPhotoUpload:boolean|     |&lt;&lt;enumeration>>|
+  |           |          |+creditCardType:CreditCardType |             |+videosEnabled:boolean       |     |EventAccessKind|
+  |           |          |+creditCardNumber:integer      |             |+onlyAdminVideoUpload:boolean|     |---------------|
+  |           |          |+expirationDateMonth:integer   |             |+access:EventAccessKind      |     |open           |
+  |           |1         |+expirationDateYear:integer    |             |+isShown:boolean             |     |closed         |
++----------------+       |+country:string                |             +-----------------------------+     |secret         |
+|   Profile      |       |+address:string                |                     #                           +---------------+
+|----------------|       |+cityOrTown:string             |                     |0..*
+|+status:string  |       |+stateOrProvinceOrRegion:string|             +---------------+
++----------------+       |+zipOrPostalCode:string        |             |EventInvitation|
+ #  #  #  #  #  #        +-------------------------------+             +---------------+
+ |  |  |  |  |  |
+ |  |  |  |  |  '------------------------------------------------------------------------------------------------------------------------------------------.
+ |  |  |  |  '-------------------------------------------------------------------------------------------------------------------------.                   |
+ |  |  |  '-----------------------------------------------------------------------------------------------------.                      |                   |
+ |  |  '---------------------------------------------------------------------.                                  |                      |                   |
+ |  '------------------------------------------.                             |                                  |                      |                   |
+ |1                                            |1                            |1                                 |*                     |*                  |*
++----------------------------------+  +---------------------+  +----------------------------------+  +-----------------------+  +-------------+  +---------------------+             
+| BasicInformation                 |  | PersonalInformation |  | ContactInformation               |  |Job                    |  | HighSchool  |  |School               |
+|----------------------------------|  |---------------------|  |----------------------------------|  |-----------------------|  |-------------|  |---------------------|
+|+sex:Sex                          |  |+activities:text     |  |+emailsOnlyForFriends:boolean     |  |+employer:string       |  |+name:string |  |+name:string         |
+|+interestedInMen:boolean          |  |+interests:text      |  |+screenNamesOnlyForFriends:boolean|  |+position:string       |  |+year:integer|  |+year:integer        |
+|+interestedInWomen:boolean        |  |+favoriteMusic:text  |  |+mobilePhoneOnlyForFriends:boolean|  |+description:text      |  +-------------+  |+attendedFor         |
+|+lookingForFriendship:boolean     |  |+favoriteTVShows:text|  |+landPhoneOnlyForFriends:boolean  |  |+city:string           |                   |+concentration:string|
+|+lookingForARelationship:boolean  |  |+favoriteMovies:text |  |+addressOnlyForFriends:boolean    |  |+state:string          |                   +---------------------+
+|+lookingForWhateverICanGet:boolean|  |+favoriteBooks:text  |  |+websiteOnlyForFriends:boolean    |  |+country:string        |
+|+lookingFOrDating:boolean         |  |+favoriteQuotes:text |  +----------------------------------+  |+startMonth:integer    |
+|+birthdayDay:Date                 |  |+aboutMe:text        |     | # #        #           |         |+startYear:integer     |
+|+hometown:string                  |  +---------------------+     | | |        |           |         |+stillInThisJob:boolean|
+|+politicalViews:PoliticalView     |                              | | |        |           |         |+endMonth:integer      |
+|+religiosViews:string             |      .-----------------------' | |        |           |         |+endYear:integer       |
++----------------------------------+      |    .--------------------' |        |           |         +-----------------------+         
+                                          |    |additionalEmail       |        |           '------------------.
+                              contactEmail|1   |*                    1|        |*                             |1
+                                        +------------+  +---------------+  +--------------------------+  +-------------+   
+                                        | Email      |  | Address       |  | ScreenName               |  | Website     |
+                                        |------------|  |---------------|  |--------------------------|  |-------------|
+                                        |+email:Email|  |+address:string|  |+name:string              |  |+website:text|
+                                        +------------+  |+city:string   |  |+im:InstantMessengerSystem|  +-------------+
+                                                        |+state:string  |  +--------------------------+
+                                                        |+country:string|
+                                                        +---------------+
+
+
+
+ +---------------+  +------------------------+   +---------------+   +----------------+
+ |&lt;&lt;enumeration>>|  |     &lt;&lt;enumeration>>    |   |&lt;&lt;enumeration>>|   |&lt;&lt;enumeration>> |
+ | PoliticalView |  | InstantMessengerSystem |   |CreditCardType |   |AttendanceStatus|
+ |---------------|  |------------------------|   |---------------|   |----------------|
+ | veryLiberal   |  | aim                    |   |visa           |   |attending       |
+ | liberal       |  | googleTalk             |   |mastercard     |   |notAttending    |
+ +---------------+  | skype                  |   |discover       |   |maybeAttending  |
+                    | windowsLive            |   |americanExpress|   |notYetReplied   |
+                    | yahoo                  |   +---------------+   |blocked         |
+                    | gaduGadu               |                       +----------------+
+                    +------------------------+
+ 
+ */
+</pre>
+
+<h3>#277</h3>
+<pre>
+@Test
+/**
+ * @InputModel Package a277 =
+ 
+ 
+                                                     +-----+
+                                                     |Agent|
+                                                     +-----+                                     +---------------+
+                                                       A A                                       |   Licence     |
+                      .--------------------------------' '----------------------------------.    +---------------+
+                      |                                                                     |     ^holdsLicence |
+                      |                                                                     |     |             vheldBy
++------------------------+      identifier+----------------------------+        identifies+----------------------+
+|Person                  |--------------->|       Identifier           |----------------->| LegalEntity          |
+|------------------------|                |----------------------------|              0..1|----------------------|  companyActivity+---------------------+
+|+fullName :String       |                |+identifier :String         |legalIdentifier   |+legalName :text      |---------------->|Code                 |
+|+familyName :String     |                |+identifierType :String     |&lt;-----------------|+alternativeName :text|             0..*|---------------------|
+|+givenName :String      |identifies      |+dateOfIssue :dateTime      |1                 |                      |    companyStatus|+content :String     |
+|+patronymicName :String |&lt;---------------|+issuingAuthority :String   |identifier        |                      |---------------->|+list :String        |
+|+alternativeName :String|                |+issuingAuthorityURI :String|&lt;-----------------|                      |             0..1|+list agency :String |
+|+gender :code           |                +----------------------------+0..*              |                      |      companyType|+list version :String|
+|+birthName :String      |     residency +------------+    +------+ change                |                      |---------------->|                     |
+|+dateOfBirth :dateTime  |-------------->|Jurisdiction|    |Change|&lt;----------------------|                      |             0..1+---------------------+
+|+dateOfDeath :dateTime  |-------------->|------------|    |      |&lt;-----------------.    +----------------------+
++------------------------+   citicenship |+name :text |    +------+ change           |             |
+ |               | | | |                 |+id :URI    |       ^change                |             |
+ |               | | | |                 +------------+       |                      |         0..1vregisteredAddress
+ |               | | | '--------------------------------------'                   +--------------------------+
+ |               | | |                                                            |Address                   |
+ |               | | '------------------------.                                   |--------------------------|
+ |               | '------------.             |                                   |+fullAddress :String      |
+ |countryOfBirth |              |             |                                   |+poBox :String            |
+ |               |placeOfBirth  |             |                                   |+thoroughfare :String     |
+ v               v              |             |                                   |+locatorDesignator :String|
++--------------------------+    |             |                                   |+locatorName :String      |
+|Location                  |&lt;---'             |                                   |+addressArea :String      |
+|--------------------------| countryOfDeath   |                                   |+postName :String         |
+|+geographicName :String   | placeOfDeath     |                                   |+adminUnitL2 :String      |
+|+geographicIdentifier :URI|&lt;-----------------'                        address    |+adminUnitL1 :String      |
+|                          |----------------------------------------------------->|+postCode :String         |
+|                          |                                                      |+addressID :String        |
+|                          |     geometry +-----------------+                     +--------------------------+
+|                          |------------->|Geometry         |
+|                          |              |-----------------|
+|                          |--------.     |+wkt :String     |                      +----------------------------------+
++--------------------------+        |     |+lat :String     |                      |&lt;&lt;abstract>>                      |
+                                    |     |+long :String    |                      |Alternative Address Representation|
+                                    |     |+xmlGeometry :XML|                      |----------------------------------|
+                                    |     +-----------------+                      |+addressID :String                |
+                                    |                                              +----------------------------------+
+                                    |     +------------------------------------+
+                                    |     |Geometry(alternative Representation)|
+                                    '---->|------------------------------------|
+                                 geometry |+coordinates :CoordinateList        |
+                                          |+crs :CRSIdentifier                 |
+                                          |+geometryType :GeometryType         |
+                                          +------------------------------------+
+*/
+</pre>
+
+
+<h3>#611</h3>
+<pre>
+@Test   
+/**
+ * @InputModel Package gameModel = 
+                    
+                                                                    +---------+
+                                                                    |composite|
+                                   +-----------+                    +---------+
+                                   |owned-thing|                        A                                   +---------+
+                                   +-----------+                        |                                   |gui-thing|
+                                     A       A                      +---------------+                       +---------+
+                                     |       |                      | visible-thing |                           A
+                                  +-----+ +------------+            +---------------+          .----------------(-.
+                                  |group| |  entity    |---.         A A A A A A A A           |                | |
+                                  +-----+ +------------+   '---------' | | | | | | '-----------'              +----+
+                                           A A A A  A A                | | | | | '-----------------------.    |text|
++---------------+                          | | | |  | |          .-----' | | | '-----------------.       |    +----+
+|volatile-entity|--------------------------' | | |  | |          |     .-' | '----------.        |       |
++---------------+ .--------------------------' | |  | |          |     |   |            |        |       |
+ A                |                            | |  | |          |     |   |            |        |       |
+ | +---------------+                           | |  | |          |     |   |            |        |       |
+ | |thinking-entity|    +------------------+   | |  | |          |     |   |            |        |       |
+ | +---------------+    |independent-entity|---' |  | |  +--------------+ +-----------------+ +------------+
+ |    A                 +------------------+     |  | |  |visible-circle| |visible-rectangle| |visible-line|
+ |    |  +---------+     A A              A      |  | |  +--------------+ +-----------------+ +------------+
+ |    |  |explosion|-----' |              '---.  |  | |   A     A    A A                              A
+ |    |  +---------+ .-----'               .--(--'  | '---(-----(----(-(------------------------------(--------.
+ |    |              |                     |  |     '--.  |     |    | '--------------------.         |        |     
+ |    | +-------------+ +-------------------+ |        |  |     |    |                      |         |        |
+ |    | |moving-entity| |destructible-entity| |       +------+  |  +-------------------+  +----+    +---------------+
+ |    | +-------------+ +-------------------+ |       |weapon|  |  |selection-indicator|  |glow|    |continuous-fire|
+ |    |  A          A    A A A             A  |       +------+  |  +-------------------+  +----+    +---------------+
+ |    |  |          |    | | |             |  |         A   A   '--------------------.                 A      A
+ |    |  |   .------(----' | |             |  |         |   '----------.             |                 |      |
+ |    |  |   |      |      | |             |  |         |              |             |                 |      |
+ |    |  |   |  .---(------' |  +--------+ |  |  +-----------------+ +------------+  |  +----------------+ +----------+
+ |    |  |   |  |   |        |  |obstacle| |  |  |projectile-weapon| |laser-cannon|  |  |machine-gun-fire| |laser-beam|
+ |    |  |   |  |   |        |  +--------+ |  |  +-----------------+ +------------+  |  +----------------+ +----------+
+ |    '--(---(--(---(---.    |          A  |  |            A     A                   |                              
+ |       |   |  |   |   |    |          |  |  |            |     '------.      .-----'
++-------------+ |  +----------+       +--------+    +---------------+ +------+ | 
+|  projectile | |  |   unit   |       |building|    |rocket-launcher| |cannon| |
++-------------+ |  +----------+       +--------+    +---------------+ +------+ |
+     A     A    |      A  A                   A                                |
+     |     |    |      |  '------------.      '--------------------------------(---------.
+     |     |    |      |               |                                       |         |
+ +-----+  +------+    +--------+       |   +-----------+                       |     +-------+
+ |shell|  |rocket|    |air-unit|       '---|ground-unit|-----------------------'     |factory|  
+ +-----+  +------+    +--------+           +-----------+                             +-------+
+ 
++------+        +----+    +-------+    +-------+    +------------+    +----+    +-----+    +-------+    +------+
+|player|        |game|    |terrain|    |polygon|    |bounding-box|    |line|    |cicle|    |vehicle|    |vektor|
++------+        +----+    +-------+    +-------+    +------------+    +----+    +-----+    +-------+    +------+
+ */
+</pre> 
+ 
+ 
+ 
+ 
+<h3>#616</h3>
+<pre>
+@Test
+/**
+ * @InputModel Package a616 =
++--------------------------------------+       +----------------------------------+       +---------+
+|Configurator                          |       |ConfLoader                        |       |MainClass|
+|--------------------------------------|       |----------------------------------|       |---------|
+|+MasterAuthorization: String          |       |- _xmlDoc : XmlDocument           |       | Main()  |
+|+MasterDBName: String                 |------>|----------------------------------|       +---------+
+|+MasterDBUser: String                 |       |ConfLoader(ConfXML: String)       |         |
+|+MasterDBPassword: String             |       |LoadConfig(param: String) : String|         |
+|+MasterServerName: String             |       |LoadIntConfig(param: String) : int|         |
+|+SlaveAuthorization: String           |       +----------------------------------+         |                                     
+|+SlaveDBName: String                  |                                                    v
+|+SlaveDBUser: String                  |    +-------------------------------------------------------+
+|+SlaveDBPassword: String              |    |EventTimer                                             |
+|+SlaveServerName: String              |    |-------------------------------------------------------|
+|+MainTimerValue: int                  |    |- _tmr: Timer                                          |
+|+SchemaName: String                   |    |- _autoEvent: AutoResetEvent                           |
+|+AdminEMail: String                   |    |- _tcb: TimerCallback                                  |
+|+SmtpHost: String                     |    |- _interval: int                                       |
+|+SmtpPort: int                        |    |-------------------------------------------------------|
+|+SmtpUser: String                     |    |EventTimer(timerInterval: int, callback: TimerCallback)|
+|+SmtpPassword: String                 |    |Start()                                                |
+|+ProgMail: String                     |    |ChangeInterval(newInterval: int)                       |
+|+MaxDBErrorCount: int                 |    |Stop()                                                 |
+|+SecondaryTimer: int                  |    +-------------------------------------------------------+
+|+SendMail: bool                       |      |   
+|--------------------------------------|      |   +----------------------------------------------------------------------------------------------------------+
+|Configurator(fileName: String)        |      |   |EMailSender                                                                                               |
+|isWindowsAuth(authType: String) : bool|      |   |----------------------------------------------------------------------------------------------------------|
++--------------------------------------+      |   |- _emailAddress: String                                                                                   |
+                            |                 |   |- _smtpHost: String                                                                                       |
+                            |                 |   |- _userName: String                                                                                       |
+                            |_config          |   |- _userPassword: String                                                                                   |
+                            |                 |   |- _smtpPort: int                                                                                          |
+                            |                 |   |- _smtp: SmtpClient                                                                                       |
+                            |                 |   |----------------------------------------------------------------------------------------------------------|
+                            |                 |   |EMailSender(emailAddress: String, smtpHost: String, userName: String, userPassword: String, smtpPort: int)|
+                            |                 |   |SendMessage(message: String, adminEmail: String)                                                          |
+                            |                 |   +----------------------------------------------------------------------------------------------------------+
+                            |                 |                                    ^
+                            #                 v                                    |
++-------------------------------------------------------------------------------------------------+
+|ReplicationProcess                                                                               |
+|-------------------------------------------------------------------------------------------------|
+|- _config: Configurator                                                                          |
+|- _dbmMaster: DBManager                                                                          |
+|- _dbmSlave: DBManager                                                                           |
+|-------------------------------------------------------------------------------------------------|
+|ReplicationProcess(config: Configurator)                                                         |
+|ReplicateOne(journalSchema: String, journalName: String, slaveSchema: String, slaveTable: String)|
+|OnTimedEvent(stateInfo: Object)                                                                  |
+|ReplicateAll()                                                                                   |
+|OnStart()                                                                                        |
+|ConnectMaster(maxErrorCount: int)                                                                |
+|ConnectSlave(maxErrorCount: int)                                                                 |
++-------------------------------------------------------------------------------------------------+
+                    #_dbmMaster
+                    |
+                    |_dbmSlave
++-------------------------------------------------------------------------------------------------------------------------------------------+
+|DBManager                                                                                                                                  |
+|-------------------------------------------------------------------------------------------------------------------------------------------|
+|- _connection: SqlConnection                                                                                                               |
+|- _dbName: String                                                                                                                          |
+|-------------------------------------------------------------------------------------------------------------------------------------------|
+|DBManager(compName: String, dbName: String)                                                                                                |
+|CloseConnection()                                                                                                                          |
+|isConnected() : bool                                                                                                                       |
+|RunQuery(sqlCode: String) : List&lt;SqlResult>                                                                                                |
+|ReadFirst(schemaName: String, tableName: String) : SqlResult                                                                               |
+|RemoveFirst(schemaName: String, tableName: String)                                                                                         |
+|GetPrimaryKeyName(schemaName: String, tableName: String) : String                                                                          |
+|GetPrimaryKeyId(schemaName: String, tableName: String) : int                                                                               |
+|CreateJournal(schemaName: String, tableName: String, tableStruct: SqlTableStruct)                                                          |
+|DeleteJournal(schemaName: String, tableName: String)                                                                                       |
+|GetTableInfo(schemaName: String, tableName: String) : SqlTableStruct                                                                       |
+|GenerateSqlOnInsert(journalSchema: String, journalName: String, slaveSchema: String, slaveTable: String, journalRowID: String)             |
+|GenerateSqlOnUpdate(journalSchema: String, journalName: String, slaveSchema: String, slaveTable: String, journalRowID: String)             |
+|GenerateSqlOnDelete(journalSchema: String, journalName: String, slaveSchema: String, slaveTable: String, journalRowID: String)             |
+|GetDBInfo() : SqlDBStruct                                                                                                                  |
+|CreateTriggerOnInsert(schemaName: String, tableName: String, slaveDBName: String)                                                          |
+|CreateTriggerOnUpdate(schemaName: String, tableName: String, slaveDBName: String)                                                          |
+|CreateTriggerOnDelete(schemaName: String, tableName: String, slaveDBName: String)                                                          |
+|isObjectNotNull(objectSchema: String, objectName: String) : bool                                                                           |
+|CreateTable(schemaName: String)                                                                                                            |
+|MergeTables(fromDBName: String, fromSchemaName: String, fromTableName: String, toDBName: String, toSchemaName: String, toTableName: String)|
+|CreateDB()                                                                                                                                 |
++-------------------------------------------------------------------------------------------------------------------------------------------+
+                           |                                      |                                      |
+                           v                                      v                                      v
+             +--------------------------+          +---------------------------+          +-----------------------------+
+             |SqlResult                 |          |SqlDBStruct                |          |SqlTableStruct               |
+             |--------------------------|          |---------------------------|          |-----------------------------|
+             |+ColumnCount: int         |          |+TablesCount : int         |          |+ColumnCount: int            |
+             |+ColumnNames: List&lt;String>|          |+SchemasNames: List&lt;String>|          |+ColumnNames: List&lt;String>   |
+             |+Types: List&lt;System.Type> |          |+TablesNames: List&lt;String> |          |+ColumnSqlTypes: List&lt;String>|
+             |+Values: ArrayList        |          |+ObjectsIDs: List&lt;String>  |          |+isPrimaryKey : List&lt;bool>   |
+             |--------------------------|          |---------------------------|          |-----------------------------|
+             |SqlResult()               |          |SqlDBStruct()              |          |SqlTableStruct               |
+             +--------------------------+          +---------------------------+          +-----------------------------+
+
+ */
+</pre>
+
+<h3></h3>
+
+</body>
+</html>
