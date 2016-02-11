@@ -1,0 +1,446 @@
+<html lang="en-uk">
+<head>
+<title>Model-driven Unit Testing using ASCII-art as Notational Text</title>
+<style type="text/css">
+body {font-family: monospace; font-size: 12pt; background-color:rgb(220,220,220); margin-top:15pt; margin-bottom:100%}
+p {margin: 10pt; background-color: rgb(0,220,220)}
+pre {border: 1px solid rgb(80,80,80); font-family: monospace; font-size:10pt; background-color: white; width:100ch}
+div.linelengthindicator {position:fixed; top: 0px; background-color: rgb(240,240,240); font-family:monospace; font-size: 10pt; border-bottom: 1px solid rgb(80,80,255)}
+</style>
+</head>
+<body>
+<h1>UML test models</h1>
+
+<div class="linelengthindicator">
+<span style="color:rgb(0,192,192)" title="100 characters">1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890</span><!--100 characters--><span style="color:rgb(192,0,192)" title="120 characters">12345678901234567890</span><!--120 characters--><span style="color:rgb(160,160,160)">1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890</span>
+</div>
+<div style="position:absolute; top:20px; right: 30%; background-color: orange">
+^^^ use this as a quick line length reference ^^^
+</div>
+
+
+<a href="umltestmodels.zip">Download all models</a>
+
+<h2>CBC</h2>
+<h3>test01</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test01 =
+    +--------+
+    | Class1 |
+    +--------+
+     */
+</pre>
+
+<h3>test02</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test02 = 
+    
+    +---------------------+        
+    | Class1              |         +--------+
+    |---------------------|         | Class2 |
+    | Attribute1 : Class2 |         +--------+
+    +---------------------+
+    
+     */
+</pre>
+
+<h3>test03</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test03 =    
+    +--------+ class1        class2 +--------+
+    | Class1 |--------------------->| Class2 |
+    +--------+ 1                  1 +--------+
+    
+     */
+</pre>
+
+<h3>test04</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test04 =     
+    +---------------------+
+    | Class1              | class1        class2 +--------+
+    |---------------------|--------------------->| Class2 |
+    | Attribute1 : Class2 | 1                  1 +--------+
+    +---------------------+
+    
+     */
+</pre>
+
+<h2>CE</h2>
+<h3>test01</h3>
+<pre>
+    @Test
+    /**
+     * InputModel Package test01 =         
+    +--------+
+    | Class1 |
+    +--------+
+    
+     */
+</pre>
+
+<h2>DNH</h2>
+<h3>test01</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package Package1 =
+     * 
+     * 
+     * 
+     */
+</pre>
+
+<h2>Dummymetric</h2>
+<h3>test01</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test01 = 
+     *     
+    +----------+
+    | Example  |
+    |----------|
+    | +a       |
+    | +b       |
+    | +c       |
+    +----------+
+    
+     */
+</pre>
+
+<h2>HAGG</h2>
+<h3>test01</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test01 =     
+    +--------+
+    | Class1 |
+    +--------+
+    
+     * 
+     */
+</pre>
+
+
+<h3>test02</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test02 =     
+    +--------+class1  class2+--------+
+    | Class1 |@------------>| Class2 |
+    +--------+1            1+--------+
+    
+     */
+</pre>
+
+<h3>test03</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test03 =     
+    +--------+class1       class2+--------+
+    | Class1 |@----------------->| Class2 |
+    +--------+1                 1+--------+
+       1@                  
+        |class1            
+        |                  
+        |class3            
+       1v                  
+    +--------+class3       class4+--------+
+    | Class3 |@----------------->| Class4 |
+    +--------+1                 1+--------+
+    
+     */
+</pre>
+
+
+<h2>MAXDITC</h2>
+<h3>test01</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test01 =     
+    +--------+
+    | Class1 |
+    +--------+
+   
+     * 
+     */
+</pre>
+
+<h3>test02</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test02 =     
+    +--------+
+    | Class2 |
+    +--------+
+        A
+        |
+        |
+    +--------+
+    | Class1 |
+    +--------+
+    
+     */
+</pre>
+
+<h3>test03</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test03 = 
+     *     
+    +--------+                          +--------+
+    | Class4 |                          | Class2 |
+    +--------+                          +--------+
+        A                                    A
+        |                                    |
+    +--------+                               |
+    | Class3 |                               |
+    +--------+                               |
+        A                                    |
+        '----------------.  .----------------'
+                         |  |
+                      +--------+
+                      | Class1 |
+                      +--------+
+                      
+     */
+</pre>
+
+
+<h2>NASSC</h2>
+<h3>test01</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test01 =     
+    +--------+
+    | Class1 |
+    +--------+
+    
+     * 
+     */
+</pre>
+
+<h3>test02</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test02 =     
+           .---------.
+     class1|         |
+           v         |
+    +--------+       |
+    | Class1 |-------'
+    +--------+ class1
+    
+
+     */
+</pre>
+
+<h2>NEATC</h2>
+<h3>test01</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test01 = 
+     *     
+    +-----------------------+
+    | Class1                |
+    |-----------------------|
+    | +Attribute1 : Boolean |
+    +-----------------------+
+     */
+</pre>
+
+<h3>test02</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test02 = 
+     *     
+    +----------------------+      +----------------------+      +--------+
+    | Class1               |      | Class2               |      | Class1 |
+    |----------------------|      |----------------------|      +--------+
+    | +Attribute1 : Class3 |      | +Attribute1 : Class3 |
+    +----------------------+      +----------------------+
+    
+     */
+</pre>
+
+
+<h2>NEIPO</h2>
+<h3>test01</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test01 = 
+     *     
+    +--------------+
+    | Class1       |
+    |--------------|
+    |--------------|
+    | Operation1() |
+    +--------------+
+    
+     */
+</pre>
+
+<h3>test02</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test02 =     
+    +-------------------------+       +--------+
+    | Class1                  |       | Class2 |
+    |-------------------------|       +--------+
+    |-------------------------|
+    | Operation1(p1 : Class2) |
+    | Operation2(p1 : Class2) |
+    +-------------------------+
+    
+     */
+</pre>
+
+<h3>test03</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test03 =     
+    +--------------------------------------+       +--------+
+    | Class1                               |       | Class2 |
+    |--------------------------------------|       +--------+
+    |--------------------------------------|
+    | Operation1(p1 : Class2, p2 : Class2) |
+    | Operation2(p1 : Class2)              |
+    | Operation3(p1 : Class2, p2 : Class2) |
+    +--------------------------------------+
+    
+     */
+</pre>
+
+<h2>NIH</h2>
+<h3>test01</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test01 = 
+    +--------+      +--------+
+    | Class1 |      | Class2 |
+    +--------+      +--------+
+     */
+</pre>
+
+<h3>test02</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test02 =     
+    +--------+              +--------+
+    | Class1 |              | Class2 |
+    +--------+              +--------+
+        A                        A
+        |                        |
+        |                        |
+        |                        |
+    +--------+              +--------+
+    | Class3 |              | Class4 |
+    +--------+              +--------+
+    
+     */
+</pre>
+
+<h2>NSUPC2</h2>
+<h3>test01</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test01 =     
+    +--------+
+    | Class1 |
+    +--------+
+    
+     */
+</pre>
+
+<h3>test02</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel Package test02 =     
+    +--------+
+    | Class2 |
+    +--------+
+        A
+        |
+        |
+    +--------+
+    | Class1 |
+    +--------+
+   
+     */
+</pre>
+
+<h3>test03</h3>
+<pre>
+     @Test
+     /**
+      * @InputModel Package test03 = 
+      *     
+    +--------+                          +--------+
+    | Class4 |                          | Class2 |
+    +--------+                          +--------+
+        A                                    A
+        |                                    |
+    +--------+                               |
+    | Class3 |                               |
+    +--------+                               |
+        A                                    |
+        '----------------.  .----------------'
+                         |  |
+                      +--------+
+                      | Class1 |
+                      +--------+
+         
+      */
+</pre>
+
+<h2>TNCP</h2>
+<h3>test01</h3>
+<pre>
+     @Test
+    /**
+    * @InputModel Package Package1 =
+    * 
+    * 
+    */
+</pre>
+
+<h3>test02</h3>
+<pre>
+     @Test
+     /**
+      * @InputModel Package test02 = 
+      *     
+    +--------+      +--------+
+    | Class1 |      | Class2 |
+    +--------+      +--------+
+      */
+</pre>
+
+</body>
+</html>

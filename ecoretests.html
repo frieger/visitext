@@ -2,13 +2,24 @@
 <head>
 <title>Model-driven Unit Testing using ASCII-art as Notational Text</title>
 <style type="text/css">
-body {font-family: monospace; font-size: 12pt; background-color:rgb(220,220,220)}
+body {font-family: monospace; font-size: 12pt; background-color:rgb(220,220,220); margin-top:15pt; margin-bottom:100%}
 p {margin: 10pt; background-color: rgb(0,220,220)}
-pre {border: 1px solid rgb(80,80,80); font-family: monospace; font-size:10pt; background-color: white}
+h2 {border-left:1.5em solid rgb(0,220,220); padding-left:0.5em}
+pre {border: 1px solid rgb(80,80,80); font-family: monospace; font-size:10pt; background-color: white; width:100ch}
+div.linelengthindicator {position:fixed; top: 0px; background-color: rgb(240,240,240); font-family:monospace; font-size: 10pt; border-bottom: 1px solid rgb(80,80,255)}
+
 </style>
 </head>
 <body>
 <h1>Ecore test models</h1>
+
+<div class="linelengthindicator">
+<span style="color:rgb(0,192,192)" title="100 characters">1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890</span><!--100 characters--><span style="color:rgb(192,0,192)" title="120 characters">12345678901234567890</span><!--120 characters--><span style="color:rgb(160,160,160)">1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890</span>
+</div>
+<div style="position:absolute; top:20px; right: 30%; background-color: orange">
+^^^ use this as a quick line length reference ^^^
+</div>
+
 
 <a href="ecoretestmodels.zip">Download all models</a>
 
@@ -54,6 +65,149 @@ pre {border: 1px solid rgb(80,80,80); font-family: monospace; font-size:10pt; ba
      *                           | Attribute3 |
      *                           +------------+  
      *                           
+     */
+</pre>
+
+<h2>HAGGEC</h2>
+<h3>test01</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel EPackage Package1 = 
+     * 
+        +--------+
+        | Class1 |
+        +--------+
+
+     */
+</pre>
+
+
+<h3>test02</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel EPackage Package1 = 
+     *  +--------+                        +--------+
+     *  | Class1 |-----{newEReference}--->| Class2 |
+     *  +--------+                       *+--------+
+     */
+
+</pre>
+
+<h3>test03</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel EPackage Package1 = 
+     *  +--------+                        +--------+
+     *  | Class1 |------{newEReference}-->| Class2 |
+     *  +--------+                        +--------+
+     *      |                              
+     *      |{newEReference}                              
+     *      |                              
+     *      v                              
+     *  +--------+                        +--------+
+     *  | Class3 |------{newEReference}-->| Class4 |
+     *  +--------+                        +--------+     
+     *  
+     */
+</pre>
+
+
+<h2>MAXDITEC</h2>
+<h3>test01</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel EPackage Package1 =
+     *  +--------+
+     *  | Class1 |
+     *  +--------+ 
+     */
+</pre>
+
+<h3>test02</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel EPackage Package1 = 
+     *  +--------+
+     *  | Class2 |
+     *  +--------+
+     *      A
+     *      |
+     *  +--------+
+     *  | Class1 |
+     *  +--------+
+     */
+</pre>
+
+<h3>test03</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel EPackage Package1 = 
+     *               +--------+
+     *               | Class4 |
+     *               +--------+
+     *                   A
+     *                   |
+     *  +--------+   +--------+         
+     *  | Class2 |   | Class3 |
+     *  +--------+   +--------+
+     *      A          A
+     *      |          |
+     *      |  .-------'        
+     *      |  |
+     *      |  |
+     *  +--------+
+     *  | Class1 |
+     *  +--------+   
+     *  
+     */
+</pre>
+
+<h2>NEPEC</h2>
+<h3>test01</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel EPackage Package1 = 
+     *  +--------+
+     *  | Class1 |
+     *  +--------+
+     */
+</pre>
+
+<h3>test02</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel EPackage Package1 = 
+     *  +--------------------------------+
+     *  |             Class1             |
+     *  |--------------------------------|
+     *  |--------------------------------|
+     *  | Operation1(p1: EInt) : EInt    |
+     *  +--------------------------------+
+     *  
+     */
+</pre>
+
+<h3>test03</h3>
+<pre>
+    @Test
+    /**
+     * @InputModel EPackage Package1 = 
+     *  +--------------------------------+
+     *  |             Class1             |
+     *  |--------------------------------|
+     *  |--------------------------------|
+     *  | Operation1(p1: EInt) : EInt    |
+     *  | Operation2(p1: EInt)           |
+     *  +--------------------------------+
+     *
      */
 </pre>
 

@@ -2,8 +2,8 @@
 <head>
 <title>Model-driven Unit Testing using ASCII-art as Notational Text</title>
 <style type="text/css">
-body {font-family: monospace; font-size: 12pt; background-color:rgb(220,220,220); margin-top: 15pt}
-p {margin: 10pt; background-color: rgb(0,220,220)}
+body {font-family: monospace; font-size: 12pt; background-color:rgb(220,220,220); margin-top: 15pt; margin-bottom:100%}
+p {margin: 10pt; color: rgb(0,220,220)}
 pre {border: 1px solid rgb(80,80,80); font-family: monospace; font-size:10pt; background-color: white}
 div.linelengthindicator {position:fixed; top: 0px; background-color: rgb(240,240,240); font-family:monospace; font-size: 10pt; border-bottom: 1px solid rgb(80,80,255)}
 </style>
@@ -14,14 +14,245 @@ div.linelengthindicator {position:fixed; top: 0px; background-color: rgb(240,240
 <div class="linelengthindicator">
 <span style="color:rgb(0,192,192)" title="100 characters">1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890</span><!--100 characters--><span style="color:rgb(192,0,192)" title="120 characters">12345678901234567890</span><!--120 characters--><span style="color:rgb(160,160,160)">1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890</span>
 </div>
+<div style="position:absolute; top:20px; right: 30%; background-color: orange">
+^^^ use this as a quick line length reference ^^^
+</div>
+
 
 <a href="umlmodels.zip">Download all models</a>
 <h2>Typical models</h2>
+<h3>#159 --- <a href="http://foss.unh.edu/resources/images/1/1f/BookRentalUML.png">source</a></h3>
+<pre>
+@Test
+/**
+ * @InputModel Package t159 = 
++-------------------+                                          +-----------------+
+| Customer          |                                          | Employee        |
+|-------------------|                                          +-----------------+
+| CustomerId        |1..1                                  1..1|EmployeeId       |
+| CustomerLastName  |----.     +-------------------+     .-----|EmployeeLastName |
+| CustomerFirstName |    |     | BookRentalInvoice |     |     |EmployeePhone    |
+| CustomerPhone     |    |     |-------------------|     |     |EmployeeEmail    |
+| CustomerEmail     |    |     | RentalNumber      |0..* |     +-----------------+                 
++-------------------+    | 0..*| CustomerId        |&lt;----'          
+                         '---->| AccountId         |           
+                               | EmployeeId        |&lt;-----.
+                               | RentalDate        |0..*  |
+                               +-------------------+      |
+                                       |1..1              |          +-------------+
+             .-------------------------'                  |          |Account      |
+             v 1..*                                       |          |-------------|
++------------------------+                                |      1..1| AccountId   |
+|BookRentalInvoiceDetails|          +--------------+      '----------| PaymentType |
+|------------------------|          |BookRentalList|                 | Balance     |
+|RentalNumber            |0..*  1..1+--------------+                 +-------------+
+|BRIN                    |&lt;---------| BRIN         |                       A  A
+|DatePurchased           |          | BookTitle    |                       |  |     
+|BaseRentFee             |          | BookCondition|        .--------------'  '-----------.     
+|ReturnDate              |          | RentFee      |        |                             |
+|DamageFee               |          +--------------+   +-----------------+      +-----------------+                               
++------------------------+                             |CheckAccount     |      |CreditAccount    |                               
+                                                       |-----------------|      |-----------------|
+                                                       | AccountId       |      | AccountId       |
+                                                       | CheckNumber     |      | CreditCardNumber|   
+                                                       | AccountNumber   |      | CreditCardName  |
+                                                       | CheckIssuerName |      | ExpirationDate  |
+                                                       +-----------------+      +-----------------+
+ */
+</pre>
+
+<h3>#262 --- <a href="http://wiki.eclipse.org/images/c/cf/Collatz_uml_class.jpg">source</a></h3>
+<pre>
+@Test
+/**
+ * @InputModel Package t262 =
++-------------------+        +------------------------+
+|CollatzFacade      |        |Parameters              |
+|-------------------|        |------------------------|
+|-entityManager     |        |-globalStartTimestamp   |
+|-------------------|        |-globalDuration         | 
+|requestUnitOfWork()|        |                        |
+|postUnitOfWork()   |        |-nextNumberToSearch     |
++-------------------+        |-partitionLength        |          +------------+
+                             |-maxPath                |          |&lt;&lt;abstract>>|
+                             |-maxValue               |          | Processor  |
+                             |-bestiterationsPerSecond|          |------------|
+                             +------------------------+          |-rank       |
+   +-------------+                                               |-performance|
+   |CollatzRecord|@-.                                            |-cores      |
+   |-------------|* |                                            |-threads    |
+  1|-unitOfWork  |  '--------------------.                       |-identifier |
+.--|-initial     |-----------.           |                       +------------+
+|  |-pathLength  |*          @1          #1                            A
+|  |-maximum     |         +-------------------+                       |
+|  +-------------+         |UnitOfWork         |             +--------------------+
+|         | 1              |-------------------|             |    &lt;&lt;abstract>>    |
+|         |                |-processor         |             |DistributedProcessor|
+|         # 1              |-initial           |             |--------------------|
+|     +-------+            |-extend(end)       |             |-ip                 |
+|     |Maximum|            |-records           |             +--------------------+
+|     |-------|1          1|-knownMax          |                       A
+|     |-number|-----------#|-knownPath         |                       |
+|     |-record|            |-start_timestamp   |1              1+---------------+
+|     +-------+            |-end_timestamp     |---------------#|ActiveProcessor|
+|                         1|-retries           |                |---------------|
+|                 .-------#|-maxPath           |                |-uow           |
+|  +-------+      |        |-maxValue          |#---------------|-category_enum |
+|  |Path   |      |        |-------------------|1              1+---------------+
+| 1|-------|1     |        |getInterval()      |  
+'-#|-number|------'        |processInterval()  |  
+   |-record|               |hailstoneSequence()|  
+   +-------+               +-------------------+
+
+ */
+</pre>
+
+<h3>#433 --- <a href="http://www.iscn.at/select_newspaper/object/huengsburg_fig5.gif">source</a></h3>
+<pre>
+@Test
+/**
+ * @InputModel Package t433 = 
+                                 +-------------------------+
+                                 | sendingReceivingProcess |
+                                 |-------------------------|
+                                 | File_Name : String      |
+                                 | Num_TCP : String        |          
+                                 |-------------------------|
+                                 | sendingFile()           |
+                                 | gettingFile()           |
+                                 | closingConnect()        |               +-------------------+
+                                 | establishingConnect()   |---------------|   writingLogBook  |  
+                                 +-------------------------+               |-------------------|
+                                              A                            | BuchName : String |
+                                              |                            | File_Name : FILE  |
+                                              |                            |-------------------|
+                                 +-------------------------+               | openBook()        |
+                                 |      InterProcess       |---------------| closeBook()       |
+                                 |-------------------------|               +-------------------+
+                                 | Num_Canal : int         |                   A          A
+                                 | File_Length : int       |                   |          |
+                                 | File_Name : String      |          +----------+     +-----------+
+                                 |-------------------------|          | LogBook  |     | ErrorBook |
+                                 | FileReceive()           |          |----------|     |-----------|
+                                 | FileSend()              |          |----------|     |-----------|
+                                 +-------------------------+          | writing()|     | writing() |
+                                       A     A      A                 +----------+     +-----------+
+            .--------------------------'     |      '--------------------------. 
+            |                                |                                 |
++--------------------------+    +---------------------------+    +---------------------------+
+|      interToMore         |    |     interFromMore         |    |      InterLargeFile       |
+|--------------------------|    |---------------------------|    |---------------------------|
+| N_Canal : int            |    | N_Canal : int             |    | File_Length : int         |
+| TCP_address : String[]   |    | DataFile[] : File         |    | N_Canal : int             |
+| Num_Port : int[]         |    |---------------------------|    | N_Number                  |
+|--------------------------|    | establishingConnection1() |    |---------------------------|
+| establishingConnection() |    +---------------------------+    | establishingConnection2() |
++--------------------------+                                     +---------------------------+
+ */
+</pre>
+
+<h3>#564 --- <a href="http://www.langomat.de/research/experiments/interactiveviews/index.htm">source</a></h3>
+<pre>
+@Test
+/**
+ * @InputModel Package t564 = 
+         +---------------------+                           +-------------+
+         | POI_Database        |                           |POI          |
+         +---------------------+                           +-------------+
+         | - POIs              |0..*                   0..*|- position   |
+         | - lastUpdate        |-----{454D8AD001D}-------->|- priority   |
+         +---------------------+                           |- name       |
+         | getPOIsForVertices()|                           +-------------+
+         | addPOI()            |                           |getPosition()|
+         | removePOI()         |                           |setPriority()|
+         | searchPOI()         |                           |getPriority()|
+         | updatePOI()         |                           +-------------+
+         +---------------------+                             A  A   A A A 
+              0..*^                       .------------------'  |   | | '------------------.
+                  |{454D87B0128}          |     .---------------'   | |                    |
+              0..*|                       |     |        .----------' |                    |
+        +-------------------------+       |     |        |    +-------------------+  +------------+
+        | POI_Alerter             |       |     |        |    |Hospital           |  |Speed_Camera|
+        +-------------------------+       |     |        |    +-------------------+  +------------+
+        | -signalTypes            |       |     |        |    |-phoneNumber       |  |-speedLimit |
+        +-------------------------+       |     |        |    |-specialization    |  +------------+
+        | getRelevantPOIs()       |       |     |        |    |-numberOfBeds      |  |getDetails()|
+        | getPOIalerts()          |       |     |        |    |-numberOfAmbulances|  +------------+
+        | getNextRestaurantMenu() |       |     |        |    |-intensivCareBeds  |
+        +-------------------------+       |     |        |    |-mortalityRate     |
+                     .--------------------'     |        |    |-sizeOfRooms       |
+                     |                          |        |    +-------------------+
+                     |                          |        |    |getNumberOfBeds()  |
+        +---------------------+  +-----------------+     |    |getSpecialization()|
+        |Restaurant           |  |Museum           |     |    +-------------------+
+        +---------------------+  +-----------------+     |   
+        |-typeOfFood          |  |-kindOfArt       |   +------------------+
+        |-chain               |  |-price           |   |Shop              |
+        |-hoursOfOperation    |  |-phoneNumber     |   +------------------+
+        +---------------------+  +-----------------+   |-rangeOfGoods     |
+        |getTypoOfFood()      |  |getTypoOfMuseum()|   |-priceCategory    |
+        |getChain()           |  |getPhoneNumber() |   +------------------+
+        |getHoursOfOperation()|  +-----------------+   |getPriceCategory()|
+        +---------------------+                        |getRangeOfFood()  |
+                                                       +------------------+
+ */
+</pre>
+
+<h3>#794 --- <a href="http://www.models-db.com/Models2015_SuplementalMaterial.aspx">source</a></h3>
+<pre>
+@Test
+/**
+ * @InputModel Package t794 =
+                                                +-------------------------+        
+                                                |  LibrarySystem          |
+                                                |-------------------------|
+                                                |+Employee_status: &lt;List> |                                               
+                                                |+Item_tracker: &lt;List>    |                                               
+                                                |+Delayed: &lt;List>         |                                               
+                                                |-------------------------|      +-----------------+            
+                +------------------+            |AddEmployee_status()     |      |  Borrower       |           
+                | Employee         |            |LoanMaintain()           |      |-----------------|           
+                |------------------|------------|UpdateBorHist()          |------|+BorName: String |           
+                |+EmplName: String |            +-------------------------+      |+BorId: int      |           
+                |+EmplNum: int     |--------------------.                        |+Contact: String |           
+                +------------------+                    |                        |-----------------|           
+                  A       A       A                     |                        |BorrowItem()     |           
+                  |       |       '--------------.      |                        |UpdateHistory()  |
++-------------------+ +-------------+ +---------------+ |               .--------|ReturnItem()     |
+|  LoanHandler      | | ShelfResp   | |PremisesCleaner| |               |        +-----------------+
+|-------------------| |-------------| +---------------+ |               |                |          
+|+counter: int      | |-------------|                   |               |                |          
+|-------------------| |PutOnShelf() |                   |               |    +---------------------+
+|AddCounter(counter)| +-------------+                   |{handles}      |    |     History         |
++-------------------+                                   |               |    |---------------------|
+                         +-----------------+            |               |    |+itemType: String    |
+                         |    Shelf        |            |               |    |+Date: String        |
+                         |-----------------|            '----------.    |    |+late_return: boolean|
+                         |+Location: String|                       |    |    |---------------------|
+                         |+LocNum: int     |                       |    |    | update_status()     |
+                         |-----------------|                  +----------+   +---------------------+
+                         |locateItem()     |------------------|   Item   | 
+                         +-----------------+                  +----------+ 
+                                                                A  A  A
+                                        .-----------------------'  |  '-----------------.
+                                        |                          |                    |
+                         +---------------------------+    +-----------------+  +------------------+
+                         | Book                      |    |       CD        |  |       DVD        |
+                         |---------------------------|    |-----------------|  |------------------|
+                         |+ISBNnum: int              |    |+RecStud: String |  |+Director: String |
+                         |+belong_series: boolean    |    +-----------------+  +------------------+
+                         |---------------------------|
+                         |AddToSeries(belong_series) |
+                         +---------------------------+
+ */
+</pre>
+
+
 
 
 <h2>Large models</h2>
 
-<h3>#108</h3>
+<h3>#108 --- <a href="http://blogimg.chinaunix.net/blog/upfile2/090615220347.jpg">source</a></h3>
 <pre>
 @Test
 /**
@@ -131,7 +362,7 @@ Based on a class diagram by Jean-Marie Favre, http://megaplanet.org/people/JeanM
  */
 </pre>
 
-<h3>#277</h3>
+<h3>#277 --- <a href="http://philarcher.org/isa/Core_Vocabularies_1.0.png">source</a></h3>
 <pre>
 @Test
 /**
@@ -193,8 +424,120 @@ Based on a class diagram by Jean-Marie Favre, http://megaplanet.org/people/JeanM
 */
 </pre>
 
+<h3>#462 --- <a href="http://enochyeah.files.wordpress.com/2011/03/im-class-diagram.jpg">source</a></h3>
+<pre>
+@Test
+/**
+* @InputModel Package a462 = 
+                                         
+                                    +---------------------+       +-------------------------+       
+                                    | baseFrame           |       |       talkFrame         |       
+                                    |---------------------|       |-------------------------|       
+                                    | + userID : String   |       |- jButtonVideo : JButton |
+                                    | + frmTitle : String |       |- jButtonVoice : JButton |
+                                    | + icon : String     |       |- jButtonSendFile        |
+                                    | + x : float         |       |- jButtonShock           |
+                                    | + y : float         |       |- jButtonSetKey          |
+                                    | + w : float         |       |- jButtonSend            |
++----------------------------+      | + h : float         |       |- jButtonSendImage       |
+| waitLoginFrame             |      |---------------------|       |- jButtonRemoteControl   |
+|----------------------------|      | getUserID()         |       |- jButtonZone            |
+| - jButtonCancel : JButton  |      | setUserID()         |       |- jButtonMusic           |
+| - jButtonWaiting : JButton |      | getBaseTitle()      |       |- jButtonGame            |
+| - jPanellogo : JPanel      |      | setBaseTitle()      |       |- jButtonMobile          |
+| - jPanelProgress : JPanel  |      +---------------------+       |- jButtonLayout          |
+|----------------------------|         A   A   A   A   A          |- jButtonDeleteFriend    |
+| jButtonCancelMouseClick()  |---------'   |   |   |   '----------|- jButtonExit            |
++----------------------------+             |   |   |              |- jButtonFindShare       |
+        ^*                                 |   |   |              |- jButtonFront           |*      
+        |                                  |   |   |              |- jButtonInfoBlackList   |&lt;---.
+        |            .---------------------'   |   |              |- jTextPane              |    |
+        |            |                         |   |              |- jTextPane              |    |
+        |            |                         |   |              |- jTextPanePersonState   |    |
+        |*           |                         |   |              +-------------------------+    |
++----------------------------------+           |   |                                             |
+| loginFrame                       |           |   '-----------------------------------------.   |
+|----------------------------------|           '-------------.                               |   |
+| - jButtonLogin : JButton         |                         |                               |   |
+| - jButtonSet : JButton           |                         |                               |   |
+| - jComboboxState : JComboBox     |          +------------------------------------------+   |   |
+| - jComboboxAccount : JComboBox   |          | netSetFrame                              |   |   |
+| - jLabelForgetP : JLabel         |          |------------------------------------------|   |   |
+| - jLabelSignUp : JLabel          |          | - jTabbedPane : JTabbedPane              |   |   |
+| - jCheckBoxRem : JCheckBox       |          | - jButtonExit : JButton                  |   |   |
+| - jCheckBoxAutoLogin : JCheckBox |          | - jButtonConfirm : JButton               |   |   |
+|----------------------------------|          | - jButtonTest : JButton                  |   |   |
+| jButonLoginMouseClick()          |*        *| - jRadioButtonNew : JRadioButton         |   |   |
+| jButtonSetMouseClick()           |&lt;-------->| - jRadioButtonOld : JRadioButton         |   |   |
+| iniFrame()                       |          | - jTextFieldIP : JTextField              |   |   |
+| signUpJLabelMouseEnter()         |          | - jTextFieldPort : JTextField            |   |   |
+| passwordForgetJLabelMouseEnter() |          | - jTextFieldServerIP : JTextField        |   |   |
++----------------------------------+          | - jTextFieldServerPort : JTextField      |   |   |
+                  ^*                          | - jComboboxType : JComboBox              |   |   |
+                  |                           | - jComboboxServerType : JComboBox        |   |   |
+                  |                           | - jLabelNetworkType : JLabel             |   |   |
+                  |                           | - jLabelNetworkAddress : JLabel          |   |   |
+                  |                           | - jLabelLoginServerType : JLabel         |   |   |
+                  |                           | - jLabelLoginServerAddress : JLabel      |   |   |
+                  |                           | - jLabelLoginServerPort : JLabel         |   |   |
+                  |                           | - jPanelNetSet : JPanel                  |   |   |
+                  |                           | - jPanelLoginSet : JPanel                |   |   |
+                  |                           | - jPanelLoginServer : JPanel             |   |   |
+                  |                           | - jPanelLoginFrame : JPanel              |   |   |
+                  |                           | - jPanelMainFrame : JPanel               |   |   |
+                  |                           |------------------------------------------|   |   |
+                  |                           | jButtonExitMouseClick()                  |   |   |
+                  |                           | jButtonConfirmMouseClick()               |   |   |
+                  |                           | jButtonTestMouseClick()                  |   |   |
+                  |                           | jRadioButtonNewStateChanged()            |   |   |
+                  |                           | jRadioButtonOldStateChanged()            |   |   |
+                  |                           | jComboboxTypeSelectedItemChanged()       |   |   |
+                  |                           | jComboboxServerTypeSelectedItemChanged() |   |   |                                
+                  |                           +------------------------------------------+   |   |
+                  |                                                                          |  *v
+                  |                                            +-----------------------------------+        
+                  |                                            | mainFrame                         |
+                  |                                            |-----------------------------------|
+                  |                                            | - jButtonCompanyEmail : JButton   |
+                  |                                            | - jButtonCompanyName : JButton    |
+                  |                                           *| - jButtonCompanyOA : JButton      |
+                  '------------------------------------------->| - jButtonFind : JButton           |
+                                                               | - jButtonIE : JButton             |
+                                                               | - jButtonInfo : JButton           |
+                                                               | - jButtonSet : JButton            |
+                                                               | - jButtonNews : JButton           |
+                                                               | - jButtonPersonHome : JButton     |
+                                                               | - jPanelFriend : JPanel           |
+                                                               | - jPanelHead : JButton            |
+                                                               | - jPanelBottom : JButton          |
+                                                               | - jPanelTeam : JPanel             |
+                                                               | - jPanelRecent : JPanel           |
+                                                               | - jLabelHeadImage : JLabel        |
+                                                               | - jLabelPersonState : JLabel      |
+                                                               | - jToolBarCompanyName : JToolBar  |
+                                                               | - jToolBarCompanyEmail : JToolBar |
+                                                               | - jToolBarCompanyOA : JToolBar    |
+                                                               +-----------------------------------+          
+                                                                              1# 
+                                                                               |
+                                                                              *| 
+                                                                   +---------------------+
+                                                                   |friendTree           |
+                                                                   |---------------------|
+                                                                   | - jLabelTreeInfo    |
+                                                                   | - GroupDateResource |
+                                                                   |---------------------|
+                                                                   | mouseClicked()      |
+                                                                   | mouseEntered()      |
+                                                                   | mouseExited()       |
+                                                                   | mousePressed()      |
+                                                                   | mouseReleased()     |
+                                                                   +---------------------+
+                                             
+*/
+</pre>
 
-<h3>#611</h3>
+<h3>#611 --- <a href="https://github.com/hijarian/Perfectstorm">source</a></h3>
 <pre>
 @Test   
 /**
@@ -254,7 +597,7 @@ Based on a class diagram by Jean-Marie Favre, http://megaplanet.org/people/JeanM
  
  
  
-<h3>#616</h3>
+<h3>#616 --- <a href="https://github.com/monitelgroup/DatabaseReplication">source</a></h3>
 <pre>
 @Test
 /**
@@ -361,7 +704,6 @@ Based on a class diagram by Jean-Marie Favre, http://megaplanet.org/people/JeanM
  */
 </pre>
 
-<h3></h3>
 
 </body>
 </html>
