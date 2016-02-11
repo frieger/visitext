@@ -156,45 +156,45 @@ div.linelengthindicator {position:fixed; top: 0px; background-color: rgb(240,240
 @Test
 /**
  * @InputModel Package t564 = 
-         +---------------------+                           +-------------+
-         | POI_Database        |                           |POI          |
-         +---------------------+                           +-------------+
-         | - POIs              |0..*                   0..*|- position   |
-         | - lastUpdate        |-----{454D8AD001D}-------->|- priority   |
-         +---------------------+                           |- name       |
-         | getPOIsForVertices()|                           +-------------+
-         | addPOI()            |                           |getPosition()|
-         | removePOI()         |                           |setPriority()|
-         | searchPOI()         |                           |getPriority()|
-         | updatePOI()         |                           +-------------+
-         +---------------------+                             A  A   A A A 
-              0..*^                       .------------------'  |   | | '------------------.
-                  |{454D87B0128}          |     .---------------'   | |                    |
-              0..*|                       |     |        .----------' |                    |
-        +-------------------------+       |     |        |    +-------------------+  +------------+
-        | POI_Alerter             |       |     |        |    |Hospital           |  |Speed_Camera|
-        +-------------------------+       |     |        |    +-------------------+  +------------+
-        | -signalTypes            |       |     |        |    |-phoneNumber       |  |-speedLimit |
-        +-------------------------+       |     |        |    |-specialization    |  +------------+
-        | getRelevantPOIs()       |       |     |        |    |-numberOfBeds      |  |getDetails()|
-        | getPOIalerts()          |       |     |        |    |-numberOfAmbulances|  +------------+
-        | getNextRestaurantMenu() |       |     |        |    |-intensivCareBeds  |
-        +-------------------------+       |     |        |    |-mortalityRate     |
-                     .--------------------'     |        |    |-sizeOfRooms       |
-                     |                          |        |    +-------------------+
-                     |                          |        |    |getNumberOfBeds()  |
-        +---------------------+  +-----------------+     |    |getSpecialization()|
-        |Restaurant           |  |Museum           |     |    +-------------------+
-        +---------------------+  +-----------------+     |   
-        |-typeOfFood          |  |-kindOfArt       |   +------------------+
-        |-chain               |  |-price           |   |Shop              |
-        |-hoursOfOperation    |  |-phoneNumber     |   +------------------+
-        +---------------------+  +-----------------+   |-rangeOfGoods     |
-        |getTypoOfFood()      |  |getTypoOfMuseum()|   |-priceCategory    |
-        |getChain()           |  |getPhoneNumber() |   +------------------+
-        |getHoursOfOperation()|  +-----------------+   |getPriceCategory()|
-        +---------------------+                        |getRangeOfFood()  |
-                                                       +------------------+
+ +---------------------+                           +-------------+                                
+ | POI_Database        |                           |POI          |                                
+ +---------------------+                           +-------------+                                
+ | - POIs              |0..*                   0..*|- position   |                                
+ | - lastUpdate        |-----{454D8AD001D}-------->|- priority   |                                
+ +---------------------+                           |- name       |                                
+ | getPOIsForVertices()|                           +-------------+                                
+ | addPOI()            |                           |getPosition()|                                
+ | removePOI()         |                           |setPriority()|                                
+ | searchPOI()         |                           |getPriority()|                                
+ | updatePOI()         |                           +-------------+                                
+ +---------------------+                             A  A   A A A                                 
+      0..*^                       .------------------'  |   | | '------------------.              
+          |{454D87B0128}          |     .---------------'   | |                    |              
+      0..*|                       |     |         .---------' |                    |              
++-------------------------+       |     |         |     +-------------------+    +------------+   
+| POI_Alerter             |       |     |         |     |Hospital           |    |Speed_Camera|   
++-------------------------+       |     |         |     +-------------------+    +------------+   
+| -signalTypes            |       |     |         |     |-phoneNumber       |    |-speedLimit |   
++-------------------------+       |     |         |     |-specialization    |    +------------+   
+| getRelevantPOIs()       |       |     |         |     |-numberOfBeds      |    |getDetails()|   
+| getPOIalerts()          |       |     |         |     |-numberOfAmbulances|    +------------+   
+| getNextRestaurantMenu() |       |     |         |     |-intensivCareBeds  |                     
++-------------------------+       |     |         |     |-mortalityRate     |                     
+             .--------------------'     |         |     |-sizeOfRooms       |                     
+             |                          |         |     +-------------------+                     
+             |                          |         |     |getNumberOfBeds()  |                     
++---------------------+   +-----------------+     |     |getSpecialization()|                     
+|Restaurant           |   |Museum           |     |     +-------------------+                     
++---------------------+   +-----------------+     |                                               
+|-typeOfFood          |   |-kindOfArt       |   +------------------+                              
+|-chain               |   |-price           |   |Shop              |                              
+|-hoursOfOperation    |   |-phoneNumber     |   +------------------+                              
++---------------------+   +-----------------+   |-rangeOfGoods     |                              
+|getTypoOfFood()      |   |getTypoOfMuseum()|   |-priceCategory    |                              
+|getChain()           |   |getPhoneNumber() |   +------------------+                              
+|getHoursOfOperation()|   +-----------------+   |getPriceCategory()|                              
++---------------------+                         |getRangeOfFood()  |                              
+                                                +------------------+                               
  */
 </pre>
 
