@@ -1,4 +1,4 @@
-package mutant.parser;
+package visitext.parser;
 
 import java.util.ArrayList;
 import java.util.Map.Entry;
@@ -6,12 +6,12 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import mutant.ascii.representation.AscChar;
-import mutant.ascii.representation.AscClass;
-import mutant.ascii.representation.AscEdge;
-import mutant.ascii.representation.AscSig;
-import mutant.util.Direction;
-import mutant.util.Util;
+import visitext.ascii.representation.AscChar;
+import visitext.ascii.representation.AscClass;
+import visitext.ascii.representation.AscEdge;
+import visitext.ascii.representation.AscSig;
+import visitext.util.Direction;
+import visitext.util.Util;
 
 /**
  * 

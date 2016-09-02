@@ -1,4 +1,4 @@
-package mutant.main;
+package visitext.main;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -13,30 +13,30 @@ import java.util.Scanner;
 
 import javax.sound.midi.Synthesizer;
 
-import mutant.ascii.representation.AscChar;
-import mutant.ascii.representation.AscClass;
-import mutant.ascii.representation.AscEdge;
-import mutant.debug.ui.ArrayVisualizer;
-import mutant.generator.EcoreGenerator;
-import mutant.main.MutantModelInfo.MutantType;
-import mutant.parser.AsciiParser;
-import mutant.parser.EdgeParser;
-import mutant.parser.ModelElementParser;
-import mutant.util.Coords;
-import mutant.util.Util;
-
 import org.eclipse.emf.common.util.URI;
+
+import visitext.ascii.representation.AscChar;
+import visitext.ascii.representation.AscClass;
+import visitext.ascii.representation.AscEdge;
+import visitext.debug.ui.ArrayVisualizer;
+import visitext.generator.EcoreGenerator;
+import visitext.main.VisiTextModelInfo.MutantType;
+import visitext.parser.AsciiParser;
+import visitext.parser.EdgeParser;
+import visitext.parser.ModelElementParser;
+import visitext.util.Coords;
+import visitext.util.Util;
 
 /**
  * 
  * @author Felix Rieger
  *
  */
-public class MutantCompiler {
+public class VisiTextCompiler {
 	
 	private final static String modelDirectory = "mutant";
 	public static boolean DEBUG = false;
-	private static List<MutantCompilationInfo> compilationInfos = new ArrayList<MutantCompilationInfo>();
+	private static List<VisiTextCompilationInfo> compilationInfos = new ArrayList<VisiTextCompilationInfo>();
 	
 	private static String basePath;
 	private static String modelPath;
@@ -44,7 +44,7 @@ public class MutantCompiler {
 	public static void main(String[] args) {
 		boolean hasMetamodels = false;
 		if (args.length == 0) {
-			System.out.println("MUTANT compiler. Arguments: MutantCompiler.jar COMPILE Java-project-base-path <Ecore-models-base-path> <DEBUG> ");
+			System.out.println("MUTANT compiler. Arguments: VisiTextCompiler.jar COMPILE Java-project-base-path <Ecore-models-base-path> <DEBUG> ");
 		}
 		
 		// Base path: Path where all source files are in, will be traversed recursively
@@ -96,8 +96,8 @@ public class MutantCompiler {
 			
 			System.out.println("writing to " + statisticsFile);
 			//PrintWriter pw = new PrintWriter(System.out);
-			pw.print(MutantCompilationInfo.getCsvHeader());
-			for (MutantCompilationInfo mci : compilationInfos) {
+			pw.print(VisiTextCompilationInfo.getCsvHeader());
+			for (VisiTextCompilationInfo mci : compilationInfos) {
 				pw.print(mci.getCsvContents());
 			}
 			pw.close();
@@ -350,7 +350,7 @@ public class MutantCompiler {
 		return new MutantJavadocParseResult(methodNameToMutantContentsMap, methodNameToLineNumberMap);
 	}
 	
-	private static MutantModelInfo getMutantModelInfo(String mutantContents) {
+	private static VisiTextModelInfo getVisiTextModelInfo(String mutantContents) {
 		int inputModelIndex;
 		if (mutantContents.contains("@InputModel")) {
 			inputModelIndex = mutantContents.indexOf("@InputModel");
@@ -362,12 +362,12 @@ public class MutantCompiler {
 		String[] tokens = modelDefSubstr.split("\\s+");
 		
 		
-		MutantModelInfo info = null;
+		VisiTextModelInfo info = null;
 		if (tokens.length == 3) { // concrete syntax: class
 			if (tokens[1].equals("EPackage")) { // ecore
-				info = new MutantModelInfo(MutantModelInfo.MutantType.CLASS, null, tokens[1], tokens[2]);
+				info = new VisiTextModelInfo(VisiTextModelInfo.MutantType.CLASS, null, tokens[1], tokens[2]);
 			} else if (tokens[1].equals("Package")) { // uml
-				info = new MutantModelInfo(MutantModelInfo.MutantType.UML, null, tokens[1], tokens[2]);
+				info = new VisiTextModelInfo(VisiTextModelInfo.MutantType.UML, null, tokens[1], tokens[2]);
 			}
 		} else if (tokens.length == 4) { // abstract syntax
 			
@@ -375,7 +375,7 @@ public class MutantCompiler {
 			int beginIdx = nsUri.indexOf('"');
 			int endIdx = nsUri.lastIndexOf('"');
 			nsUri = nsUri.substring(beginIdx+1, endIdx);
-			info = new MutantModelInfo(MutantModelInfo.MutantType.ABSTRACT, nsUri, tokens[2], tokens[3]);
+			info = new VisiTextModelInfo(VisiTextModelInfo.MutantType.ABSTRACT, nsUri, tokens[2], tokens[3]);
 		}
 		
 		return info;
@@ -391,7 +391,7 @@ public class MutantCompiler {
 				long compileTimeStart = System.nanoTime();
 				int lineNumber = methodNameToLineNumberMap.get(e.getKey());
 				System.out.println("---\n" + e.getKey());
-				MutantModelInfo info = getMutantModelInfo(e.getValue());
+				VisiTextModelInfo info = getVisiTextModelInfo(e.getValue());
 				
 				// build model filename
 				System.out.println("processing " + filename + "  " + e.getKey() + "   " + info.rootName);
@@ -494,7 +494,7 @@ public class MutantCompiler {
 				numberOfAssociations = numberOfAssociations / 2;
 				
 				
-				MutantCompilationInfo mci = new MutantCompilationInfo(filename, e.getKey(), info, (compileTimeEnd - compileTimeStart) / 1E9, classes.size(), numberOfAttributes, numberOfOperations, numberOfAssociations, numberOfGeneralizations);
+				VisiTextCompilationInfo mci = new VisiTextCompilationInfo(filename, e.getKey(), info, (compileTimeEnd - compileTimeStart) / 1E9, classes.size(), numberOfAttributes, numberOfOperations, numberOfAssociations, numberOfGeneralizations);
 				compilationInfos.add(mci);
 
 			}

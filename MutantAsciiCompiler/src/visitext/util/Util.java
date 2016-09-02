@@ -1,12 +1,12 @@
-package mutant.util;
+package visitext.util;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import mutant.ascii.representation.AscChar;
-import mutant.ascii.representation.AscClass;
-import mutant.ascii.representation.AscEdge;
+import visitext.ascii.representation.AscChar;
+import visitext.ascii.representation.AscClass;
+import visitext.ascii.representation.AscEdge;
 
 /**
  * 

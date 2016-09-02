@@ -1,4 +1,4 @@
-package mutant.debug.ui;
+package visitext.debug.ui;
 
 import java.awt.Canvas;
 import java.awt.Color;
@@ -14,11 +14,11 @@ import java.util.Random;
 
 import javax.swing.JFrame;
 
-import mutant.ascii.representation.AscChar;
-import mutant.ascii.representation.AscClass;
-import mutant.ascii.representation.AscEdge;
-import mutant.parser.EdgeParser;
-import mutant.util.Util;
+import visitext.ascii.representation.AscChar;
+import visitext.ascii.representation.AscClass;
+import visitext.ascii.representation.AscEdge;
+import visitext.parser.EdgeParser;
+import visitext.util.Util;
 /**
  * 
  * @author Felix Rieger

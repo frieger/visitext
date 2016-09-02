@@ -1,10 +1,10 @@
-package mutant.main;
+package visitext.main;
 
-public class MutantCompilationInfo {
+public class VisiTextCompilationInfo {
 	public final String fileName;
 	public final String methodName;
 	
-	public final MutantModelInfo modelInfo;
+	public final VisiTextModelInfo modelInfo;
 	
 	public final double compileTime;
 	public final int numberOfClasses;
@@ -12,8 +12,8 @@ public class MutantCompilationInfo {
 	public final int numberOfOperations;
 	public final int numberOfAssociations;
 	public final int numberOfGeneralizations;
-	public MutantCompilationInfo(String fileName, String methodName,
-			MutantModelInfo modelInfo, double compileTime, int numberOfClasses,
+	public VisiTextCompilationInfo(String fileName, String methodName,
+			VisiTextModelInfo modelInfo, double compileTime, int numberOfClasses,
 			int numberOfAttributes, int numberOfOperations,
 			int numberOfAssociations, int numberOfGeneralizations) {
 		super();

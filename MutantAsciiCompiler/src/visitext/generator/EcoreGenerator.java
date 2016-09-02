@@ -1,4 +1,4 @@
-package mutant.generator;
+package visitext.generator;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -9,11 +9,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import mutant.ascii.representation.AscClass;
-import mutant.ascii.representation.AscEdge;
-import mutant.ascii.representation.AscMethod;
-import mutant.main.MutantModelInfo;
 
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EAttribute;
@@ -55,6 +50,11 @@ import org.eclipse.uml2.uml.Type;
 import org.eclipse.uml2.uml.UMLFactory;
 import org.eclipse.uml2.uml.VisibilityKind;
 import org.eclipse.uml2.uml.resources.util.UMLResourcesUtil;
+
+import visitext.ascii.representation.AscClass;
+import visitext.ascii.representation.AscEdge;
+import visitext.ascii.representation.AscMethod;
+import visitext.main.VisiTextModelInfo;
 
 /**
  * 
@@ -694,14 +694,14 @@ public class EcoreGenerator {
 	
 	/**
 	 * Generates a xmi model from the input
-	 * @param info	MutantModelInfo containing information about the namespace uri and root node
+	 * @param info	VisiTextModelInfo containing information about the namespace uri and root node
 	 * @param classes	model elements from the ASCII representation
 	 * @param edges		model edges fromt the ASCII representation
 	 * @param modelUri	URI of saved model
 	 * @throws IOException
 	 * @throws TypeException 
 	 */
-	public static void generateEcoreAbstractModel(MutantModelInfo info, List<AscClass> classes, ArrayList<AscEdge> edges, URI modelUri) throws IOException, TypeException {
+	public static void generateEcoreAbstractModel(VisiTextModelInfo info, List<AscClass> classes, ArrayList<AscEdge> edges, URI modelUri) throws IOException, TypeException {
 		configure(true);
 		
 		

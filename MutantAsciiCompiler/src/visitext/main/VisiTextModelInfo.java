@@ -1,18 +1,18 @@
-package mutant.main;
+package visitext.main;
 
 /**
  * 
  * @author Felix Rieger
  *
  */
-public class MutantModelInfo {
+public class VisiTextModelInfo {
 	public final MutantType mutantType;
 	
 	public final String namespaceUri;
 	public final String rootType;
 	public final String rootName;
 	
-	public MutantModelInfo(MutantType mutantType, String namespaceUri, String rootType, String rootName) {
+	public VisiTextModelInfo(MutantType mutantType, String namespaceUri, String rootType, String rootName) {
 		this.mutantType = mutantType;
 		this.namespaceUri = namespaceUri;
 		this.rootType = rootType;

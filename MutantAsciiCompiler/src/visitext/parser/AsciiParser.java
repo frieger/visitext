@@ -1,14 +1,14 @@
-package mutant.parser;
+package visitext.parser;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import mutant.ascii.representation.AscChar;
-import mutant.ascii.representation.AscEdge;
-import mutant.util.Coords;
-import mutant.util.Direction;
-import mutant.util.Util;
+import visitext.ascii.representation.AscChar;
+import visitext.ascii.representation.AscEdge;
+import visitext.util.Coords;
+import visitext.util.Direction;
+import visitext.util.Util;
 
 /**
  * 

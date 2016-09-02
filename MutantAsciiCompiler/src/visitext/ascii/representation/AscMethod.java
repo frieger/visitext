@@ -1,4 +1,4 @@
-package mutant.ascii.representation;
+package visitext.ascii.representation;
 
 import java.util.HashMap;
 

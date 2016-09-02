@@ -1,15 +1,15 @@
-package mutant.parser;
+package visitext.parser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import mutant.ascii.representation.AscChar;
-import mutant.ascii.representation.AscClass;
-import mutant.ascii.representation.AscMethod;
-import mutant.util.Coords;
-import mutant.util.Util;
+import visitext.ascii.representation.AscChar;
+import visitext.ascii.representation.AscClass;
+import visitext.ascii.representation.AscMethod;
+import visitext.util.Coords;
+import visitext.util.Util;
 
 /**
  * 

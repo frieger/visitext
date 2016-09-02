@@ -1,11 +1,11 @@
-package mutant.ascii.representation;
+package visitext.ascii.representation;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import mutant.util.Util;
+import visitext.util.Util;
 
 /**
  * 
