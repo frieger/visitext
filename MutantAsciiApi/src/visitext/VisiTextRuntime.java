@@ -1,13 +1,13 @@
-package mutant;
+package visitext;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 import org.eclipse.emf.ecore.EPackage;
 
-public class MutantRuntime {
+public class VisiTextRuntime {
 	public static EPackage getPackage(String packageName) {
-		System.out.println("mutant runtime get package");
+		System.out.println("visitext runtime get package");
 		StackTraceElement[] ste = Thread.currentThread().getStackTrace();
 		StackTraceElement callerMethod = ste[2];
 		

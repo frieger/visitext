@@ -1,4 +1,4 @@
-package mutant;
+package visitext;
 import java.io.File;
 import java.io.IOException;
 import java.nio.channels.MembershipKey;
@@ -24,29 +24,29 @@ import org.eclipse.emf.ecore.xmi.impl.EcoreResourceFactoryImpl;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
 
 
-public class Mutant {
+public class VisiText {
 	
 	//private static Map<String, Resource> nameToResourceMap = new HashMap<String, Resource>();
-	private static File mutantBasePath;
-	private static File mutantExternalModelsBasePath;
+	private static File visiTextBasePath;
+	private static File visiTextExternalModelsBasePath;
 	
 	private static Map<String, EPackage> namespaceUriToEPackageMap = new HashMap<String, EPackage>();
 
 	
-	public static void init(File mutantModelPath) {
-		System.out.println("Initializing MUTANT" + mutantModelPath.getAbsolutePath());
-		mutantBasePath = mutantModelPath;
+	public static void init(File visiTextModelPath) {
+		System.out.println("Initializing VISITEXT" + visiTextModelPath.getAbsolutePath());
+		visiTextBasePath = visiTextModelPath;
 	}
 	
-	public static void init(File mutantModelPath, File externalModelsPath) {
-		System.out.println("Initializing MUTANT" + mutantModelPath.getAbsolutePath() + "  external models: " + externalModelsPath.getAbsolutePath());
-		mutantBasePath = mutantModelPath;
-		mutantExternalModelsBasePath = externalModelsPath;
-		loadAllMetaModelsFromPath(mutantExternalModelsBasePath);
+	public static void init(File visiTextModelPath, File externalModelsPath) {
+		System.out.println("Initializing VISITEXT" + visiTextModelPath.getAbsolutePath() + "  external models: " + externalModelsPath.getAbsolutePath());
+		visiTextBasePath = visiTextModelPath;
+		visiTextExternalModelsBasePath = externalModelsPath;
+		loadAllMetaModelsFromPath(visiTextExternalModelsBasePath);
 	}
 	
 	public static EPackage getPackage(String packageName, ModelType type) {
-		System.out.println("mutant get package");
+		System.out.println("visitext get package");
 		StackTraceElement[] ste = Thread.currentThread().getStackTrace();
 		StackTraceElement callerMethod = ste[2];
 		
@@ -60,17 +60,17 @@ public class Mutant {
 			modelName = className + "_" + methodName.toLowerCase() + "-outputmodel" + "_" + packageName;
 		}
 		
-		EPackage retVal = (EPackage) loadMutantResource(modelName).getContents().get(0);
+		EPackage retVal = (EPackage) loadVisiTextResource(modelName).getContents().get(0);
 		return retVal;
 	}
 
 	
-	private static Resource loadMutantResource(String modelName) {
-		return loadResourceFromFile(mutantBasePath + File.separator + modelName + ".ecore", "ecore");
+	private static Resource loadVisiTextResource(String modelName) {
+		return loadResourceFromFile(visiTextBasePath + File.separator + modelName + ".ecore", "ecore");
 	}
 	
-	private static Resource loadMutantResourceAbstract(String modelName) {
-		return loadResourceFromFile(mutantBasePath + File.separator + modelName + ".xmi", "xmi");
+	private static Resource loadVisiTextResourceAbstract(String modelName) {
+		return loadResourceFromFile(visiTextBasePath + File.separator + modelName + ".xmi", "xmi");
 	}
 	
 	private static Resource loadResourceFromFile(String filename, String extension) {
@@ -110,16 +110,16 @@ public class Mutant {
 		
 		String modelName = null;
 		if (type == ModelType.INPUT_MODEL) {
-			modelName = "mutant/" + className + "_" + methodName.toLowerCase() + "_" + name.toLowerCase();
+			modelName = "visitext/" + className + "_" + methodName.toLowerCase() + "_" + name.toLowerCase();
 		} else if (type == ModelType.OUTPUT_MODEL) {
-			modelName = "mutant/" + className + "_" + methodName.toLowerCase() + "-outputmodel" + "_" + name.toLowerCase();
+			modelName = "visitext/" + className + "_" + methodName.toLowerCase() + "-outputmodel" + "_" + name.toLowerCase();
 		}
 
-		//String modelName = "mutant/" + className + "_" + methodName.toLowerCase() + "_" + name.toLowerCase();
+		//String modelName = "visitext/" + className + "_" + methodName.toLowerCase() + "_" + name.toLowerCase();
 		
 		System.out.println("modelName: " + modelName);
 		
-		EObject retVal =  (EObject) loadMutantResourceAbstract(modelName).getContents().get(0);
+		EObject retVal =  (EObject) loadVisiTextResourceAbstract(modelName).getContents().get(0);
 		
 		return retVal;
 	}
