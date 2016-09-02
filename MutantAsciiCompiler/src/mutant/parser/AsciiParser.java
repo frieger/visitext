@@ -164,11 +164,75 @@ public class AsciiParser {
 		
 		//TODO: Add check for 8-neigh here to allow comments anywhere
 		for(int y = 0; y < input.length; y++) {
-			for (int i = 0; i < input[y].length; i++) {
+			for (int x = 0; x < input[y].length; x++) {
 				for (char currentHead : arrowheads) {
-					if ((input[y][i].color == 0) && (input[y][i].c == currentHead)) {
+					if ((input[y][x].color == 0) && (input[y][x].c == currentHead)) {
 						// head found, ignore coloured areas
-						coords.add(new Coords(i, y));
+						
+						/*  neighborhood check:
+						 * 1) <-
+						 * 2) <'
+						 * 3) <.
+						 * 4) <(
+						 * 5) <)
+						 * 6) ->
+						 * 7) '>
+						 * 8) .>
+						 * 9) (>
+						 * 10) )>
+						 * 11) @>
+						 * 12) #>
+						 * 13) <#
+						 * 14) <@
+						 * 15) ^   16)  ^   17) ^   18) ^   19) ^   20) ^
+						 *     |        '       (       )       #       @
+						 *     
+						 * 21) |   22)  .   23) (   24) )   25) #   26) @
+						 *     v        v       v       v       v       v
+						 *     
+						 * 27) A   28)  A   29) A   30) A   31) A   32) A
+						 *     |        '       (       )       #       @
+						 */
+						
+						AscChar[][] neigh = Util.get8Neigh(x, y, input);
+						
+						boolean isArrowhead = false;
+						
+						if (neigh[1][1].c == '<') {
+							if (neigh[1][2].c == '-' || neigh[1][2].c == '\'' || neigh[1][2].c == '.' 
+													 || neigh[1][2].c == '(' || neigh[1][2].c == ')'
+													 || neigh[1][2].c == '@' || neigh[1][2].c == '#') {
+								isArrowhead = true;
+							}
+						} else if (neigh[1][1].c == '>') {
+							if (neigh[1][0].c == '-' || neigh[1][0].c == '\'' || neigh[1][0].c == '.' 
+									 || neigh[1][0].c == '(' || neigh[1][0].c == ')'
+									 || neigh[1][0].c == '@' || neigh[1][0].c == '#') {
+								isArrowhead = true;
+							}
+						} else if (neigh[1][1].c == '^') {
+							if (neigh[2][1].c == '|' || neigh[2][1].c == '\'' 
+									 || neigh[2][1].c == '(' || neigh[2][1].c == ')'
+									 || neigh[2][1].c == '@' || neigh[2][1].c == '#') {
+								isArrowhead = true;
+							}
+						} else if (neigh[1][1].c == 'A') {
+							if (neigh[2][1].c == '|' || neigh[2][1].c == '\'' 
+									 || neigh[2][1].c == '(' || neigh[2][1].c == ')'
+									 || neigh[2][1].c == '@' || neigh[2][1].c == '#') {
+								isArrowhead = true;
+							}
+						} else if (neigh[1][1].c == 'v') {
+							if (neigh[0][1].c == '|' || neigh[0][1].c == '.' 
+									 || neigh[0][1].c == '(' || neigh[0][1].c == ')'
+									 || neigh[0][1].c == '@' || neigh[0][1].c == '#') {
+								isArrowhead = true;
+							}
+						}
+								
+						if (isArrowhead) {
+							coords.add(new Coords(x, y));
+						}
 					}
 				}	
 			}

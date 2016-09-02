@@ -2,18 +2,20 @@ package mutant.main;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Map.Entry;
+import java.util.Scanner;
 
-import javafx.print.Printer.MarginType;
-
-import org.eclipse.emf.common.util.URI;
+import javax.sound.midi.Synthesizer;
 
 import mutant.ascii.representation.AscChar;
 import mutant.ascii.representation.AscClass;
+import mutant.ascii.representation.AscEdge;
 import mutant.debug.ui.ArrayVisualizer;
 import mutant.generator.EcoreGenerator;
 import mutant.main.MutantModelInfo.MutantType;
@@ -22,6 +24,8 @@ import mutant.parser.EdgeParser;
 import mutant.parser.ModelElementParser;
 import mutant.util.Coords;
 import mutant.util.Util;
+
+import org.eclipse.emf.common.util.URI;
 
 /**
  * 
@@ -32,6 +36,7 @@ public class MutantCompiler {
 	
 	private final static String modelDirectory = "mutant";
 	public static boolean DEBUG = false;
+	private static List<MutantCompilationInfo> compilationInfos = new ArrayList<MutantCompilationInfo>();
 	
 	private static String basePath;
 	private static String modelPath;
@@ -77,6 +82,33 @@ public class MutantCompiler {
 		}
 		
 		traverseDirectory(new File(basePath), "java");
+		writeStatistics(new File(basePath + File.separator + "mutant" + File.separator + "compileStatistics-" + System.currentTimeMillis() + ".csv"));
+	}
+	
+	private static void writeStatistics(File statisticsFile) {
+		try {
+			if (!statisticsFile.exists()) {
+				System.out.println("creating " + statisticsFile);
+				//statisticsFile.mkdirs();
+				statisticsFile.createNewFile();
+			}
+			PrintWriter pw = new PrintWriter(statisticsFile);
+			
+			System.out.println("writing to " + statisticsFile);
+			//PrintWriter pw = new PrintWriter(System.out);
+			pw.print(MutantCompilationInfo.getCsvHeader());
+			for (MutantCompilationInfo mci : compilationInfos) {
+				pw.print(mci.getCsvContents());
+			}
+			pw.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 	
 	public static void traverseDirectory(File start, String fileExtension) {
@@ -127,14 +159,19 @@ public class MutantCompiler {
 
 			StringBuilder sb = new StringBuilder();
 
-			String currentMutantModel = null;
+			String currentMutantModelInputModel = null;
+			String currentMutantModelOutputModel = null;
 			
 			boolean inMutantModel = false;
+			boolean inInputModel = false;
+			boolean inOutputModel = false;
 			boolean inJavadocComment = false;
 			boolean foundMutantModel = false;
+			boolean mutantModelHasChanged = false;
 			String currentMethodName = null;
 			int currentLineNumber = 0;
-			int startLineNumber = 0;
+			int startLineNumberInputModel = 0;
+			int startLineNumberOutputModel = 0;
 			while (sc.hasNextLine()) {
 				currentLineNumber++;
 				String currLine = sc.nextLine();
@@ -148,13 +185,30 @@ public class MutantCompiler {
 				
 				if (inJavadocComment) {
 					if (currLine.contains("@InputModel")) {
+						System.out.println("--- begin input model");
 						inMutantModel = true;
-						startLineNumber = currentLineNumber;
+						inInputModel = true;
+						inOutputModel = false;
+						startLineNumberInputModel = currentLineNumber;
+					}
+					if (currLine.contains("@OutputModel")) {
+						System.out.println("--- begin output model");
+						inMutantModel = true;
+						inInputModel = false;
+						inOutputModel = true;
+						mutantModelHasChanged = true;
+						startLineNumberOutputModel = currentLineNumber;
 					}
 					if (currLine.trim().contains("@ModelEnd")) {
 						inMutantModel = false;
 						foundMutantModel = true;
-						currentMutantModel = sb.toString();
+						if (inInputModel) {
+							currentMutantModelInputModel = sb.toString();
+						} else if (inOutputModel) {
+							currentMutantModelOutputModel = sb.toString();
+						}
+						inInputModel = false;
+						inOutputModel = false;
 						sb = new StringBuilder();
 					}
 					if (inMutantModel) {
@@ -221,8 +275,12 @@ public class MutantCompiler {
 									currentMethodName = t.trim().substring(0, t.trim().indexOf('(')).toLowerCase();
 								}
 								foundMethod = true;
-								methodNameToMutantContentsMap.put(currentMethodName, currentMutantModel);
-								methodNameToLineNumberMap.put(currentMethodName, startLineNumber);
+								methodNameToMutantContentsMap.put(currentMethodName, currentMutantModelInputModel);
+								methodNameToLineNumberMap.put(currentMethodName, startLineNumberInputModel);
+								if (currentMutantModelOutputModel != null) {
+									methodNameToMutantContentsMap.put(currentMethodName + "-outputmodel", currentMutantModelOutputModel);
+									methodNameToLineNumberMap.put(currentMethodName + "-outputmodel", startLineNumberOutputModel);
+								}
 								foundMutantModel = false;
 								break; // no need to parse more tokens
 							}
@@ -231,18 +289,39 @@ public class MutantCompiler {
 					}
 				}
 								
+				if (mutantModelHasChanged) {
+					currentMutantModelInputModel = sb.toString();
+					if (currentMutantModelInputModel.contains("@OutputModel")) {
+						int idx = currentMutantModelInputModel.indexOf("@OutputModel");
+						currentMutantModelInputModel = currentMutantModelInputModel.substring(0, idx);
+					}
+					System.out.println(currentMutantModelInputModel);
+					mutantModelHasChanged = false;
+					sb = new StringBuilder();
+					sb.append(currLine.trim());
+				}
 				if (currLine.trim().contains("*/")) {
 					inJavadocComment = false;
 					if (inMutantModel) {
 						foundMutantModel = true;
 					}
-					inMutantModel = false;
-					currentMutantModel = sb.toString();
-					int commentEnd = currentMutantModel.lastIndexOf("*/");
+					String tmpCurrentMutantModel;
+					tmpCurrentMutantModel = sb.toString();
+					int commentEnd = tmpCurrentMutantModel.lastIndexOf("*/");
 					if (commentEnd != -1) {
-						currentMutantModel = currentMutantModel.substring(0, commentEnd);
+						tmpCurrentMutantModel = tmpCurrentMutantModel.substring(0, commentEnd);
 					}
 					sb = new StringBuilder();
+					
+					if (inInputModel) {
+						currentMutantModelInputModel = tmpCurrentMutantModel;
+					} else if (inOutputModel) {
+						currentMutantModelOutputModel = tmpCurrentMutantModel;
+					}
+					inInputModel = false;
+					inOutputModel = false;
+					inMutantModel = false;
+
 				}
 
 				
@@ -272,7 +351,12 @@ public class MutantCompiler {
 	}
 	
 	private static MutantModelInfo getMutantModelInfo(String mutantContents) {
-		int inputModelIndex = mutantContents.indexOf("@InputModel");
+		int inputModelIndex;
+		if (mutantContents.contains("@InputModel")) {
+			inputModelIndex = mutantContents.indexOf("@InputModel");
+		} else {
+			inputModelIndex = mutantContents.indexOf("@OutputModel");
+		}
 		int equalSignIndex = mutantContents.indexOf("=", inputModelIndex);
 		String modelDefSubstr = mutantContents.substring(inputModelIndex, equalSignIndex);
 		String[] tokens = modelDefSubstr.split("\\s+");
@@ -304,12 +388,13 @@ public class MutantCompiler {
 		Map<String, Integer> methodNameToLineNumberMap = parseResult.lineNumbers;
 		try {
 			for (Entry<String, String> e : methodNameToMutantContentsMap.entrySet()) {
+				long compileTimeStart = System.nanoTime();
 				int lineNumber = methodNameToLineNumberMap.get(e.getKey());
 				System.out.println("---\n" + e.getKey());
 				MutantModelInfo info = getMutantModelInfo(e.getValue());
 				
-				
 				// build model filename
+				System.out.println("processing " + filename + "  " + e.getKey() + "   " + info.rootName);
 				String modelFilename = filename + "_" + e.getKey().toLowerCase() + "_" + info.rootName.toLowerCase() ;
 				String mutantContents = e.getValue();
 				
@@ -381,6 +466,37 @@ public class MutantCompiler {
 					System.out.println("MUTANT will now generate UML CLASS " + modelUri);					
 					EcoreGenerator.generateUmlClassModel(info.rootName, classes, ep.getEdges(), modelUri);
 				} 
+				long compileTimeEnd = System.nanoTime();
+				
+				// build mutant compilation info
+				int numberOfAttributes = 0;
+				int numberOfOperations = 0;
+				for (AscClass ac : classes) {
+					numberOfAttributes += ac.attributes.size();
+					numberOfOperations += ac.methods.size();
+				}
+
+				int numberOfAssociations = 0;
+				int numberOfGeneralizations = 0;
+
+				for (AscEdge ae : ep.getEdges()) {
+					if (ae.isInheritance) {
+						numberOfGeneralizations += 1;
+					} else {
+						if (ae.oppositeEdge != null) {
+							numberOfAssociations += 1;
+						} else {
+							numberOfAssociations += 2;
+						}
+					}
+				}
+				
+				numberOfAssociations = numberOfAssociations / 2;
+				
+				
+				MutantCompilationInfo mci = new MutantCompilationInfo(filename, e.getKey(), info, (compileTimeEnd - compileTimeStart) / 1E9, classes.size(), numberOfAttributes, numberOfOperations, numberOfAssociations, numberOfGeneralizations);
+				compilationInfos.add(mci);
+
 			}
 		} catch (Exception e1) {
 			// TODO Auto-generated catch block

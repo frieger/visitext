@@ -428,7 +428,7 @@ public class EcoreGenerator {
 						attribute.setLower(1);
 						attribute.setUpper(1);
 						attribute.setName(key);
-						//clazz.getAttributes().add(attribute);
+						clazz.getOwnedAttributes().add(attribute);
 						// TODO: add attribute
 					}
 
@@ -538,7 +538,8 @@ public class EcoreGenerator {
 						targetClass, end2Navigable, targetAggregation, targetRolename, targetMultiplicityLowerBound, targetMultiplicityUpperBound);
 				*/
 				Property sourceProp = UMLFactory.eINSTANCE.createProperty();
-				sourceProp.setName("src_" + targetRolename);
+				//sourceProp.setName("src_" + targetRolename);
+				sourceProp.setName(targetRolename);
 				sourceProp.setLower(sourceMultiplicityLowerBound);
 				sourceProp.setUpper(sourceMultiplicityUpperBound);
 				sourceProp.setType(targetClass);
@@ -546,7 +547,8 @@ public class EcoreGenerator {
 				sourceClass.getOwnedAttributes().add(sourceProp);
 				
 				Property targetProp = UMLFactory.eINSTANCE.createProperty();
-				targetProp.setName("trg_" + sourceRolename);
+				//targetProp.setName("trg_" + sourceRolename);
+				targetProp.setName(sourceRolename);
 				targetProp.setLower(targetMultiplicityLowerBound);
 				targetProp.setUpper(targetMultiplicityUpperBound);
 				targetProp.setType(sourceClass);
@@ -951,9 +953,16 @@ public class EcoreGenerator {
 		
 		int[] ret = new int[]{0, -1};
 		
-		Pattern regex = Pattern.compile("[0-9]+(\\.\\.)([0-9]+|\\*)");
+		Pattern regex = Pattern.compile("[0-9]+(\\.\\.)([0-9]+|\\*)");	// standard multiplicity
 		Matcher matcher = regex.matcher(s);
-		if (matcher.find()) {
+		
+		Pattern simpleRegexOne = Pattern.compile("1");
+		Matcher simpleOneMatcher = simpleRegexOne.matcher(s);
+		
+		Pattern simpleRegexInfty = Pattern.compile("\\*");
+		Matcher simpleRegexInftyMatcher = simpleRegexInfty.matcher(s);
+				
+		if (matcher.find()) {	// standard multiplicity: x..y
 			String extracted = matcher.group();
 			String[] split = extracted.split("\\.\\.");
 			
@@ -964,6 +973,12 @@ public class EcoreGenerator {
 			} else {
 				ret[1] = Integer.parseInt(split[1]);
 			}
+		} else if (simpleOneMatcher.find()) {
+			ret[0] = 1;
+			ret[1] = 1;
+		} else if (simpleRegexInftyMatcher.find()) {
+			ret[0] = 0;
+			ret[1] = -1;
 		} else {
 			System.err.println("problem with multiplicity: have >" + s + "<");
 		}

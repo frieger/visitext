@@ -58,8 +58,11 @@ public class ArrayVisualizer {
 		private Color[] colors = new Color[]{Color.BLACK, new Color(150, 75, 0), Color.red, Color.ORANGE, Color.yellow, 
 												Color.GREEN, Color.BLUE, new Color(127,0,255)};
 		private Map<Integer, Color> newColors = new HashMap<Integer, Color>();
-		int xspace = 10;
-		int yspace = 12;
+		//int xspace = 10;
+		//int yspace = 12;
+		
+		int xspace = 8;
+		int yspace = 8;
 		
 		int xoff = 20;
 		int yoff = 50;

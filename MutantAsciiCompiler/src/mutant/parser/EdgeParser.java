@@ -23,8 +23,10 @@ public class EdgeParser {
 	public static boolean DEBUG = true;
 	private static final int MULTIPLICITY_STRING_LENGTH = 8;
 	private final String MULTIPLICITY_REGEX = "\\s*[0-9]+(\\.\\.)([0-9]+|\\*)" + "(\\s*.*)|((\\+|\\|).*)"; // should match multiplicities in the form of '(whitespace)* x..y'   where x = number, y = number or *.   Second part should match greedy whitespace followed by any characters or ( + or | (class vertices and edges) followed by any characters)  
-	private final String MULTIPLICITY_SEARCH_REGEX = "[0-9]+(\\.\\.)([0-9]+|\\*)";	// regex for searching for multiplicities
+	//private final String MULTIPLICITY_SEARCH_REGEX = "[0-9]+(\\.\\.)([0-9]+|\\*)";	// regex for searching for multiplicities
 	
+	private final String MULTIPLICITY_SEARCH_REGEX = "([0-9]+(\\.\\.)([0-9]+|\\*))|(1)|(\\*)";	// regex for searching for multiplicities
+
 	private ArrayList<AscEdge> edges = new ArrayList<AscEdge>();		// list of all edges
 	private ArrayList<String> lineNames = new ArrayList<String>();		// list of all line names
 	private ArrayList<String> signalNames = new ArrayList<String>();		// list of all signal names
@@ -317,9 +319,10 @@ public class EdgeParser {
 		}
 		m = null;
 		
-		System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~");
-		System.out.println(unprocessedArray);
-		System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~");
+		
+//		System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~");
+//		System.out.println(unprocessedArray);
+//		System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~");
 		
 		// now find all other texts and extract them with their position
 		ArrayList<StringPosition> otherLabels = new ArrayList<StringPosition>();
@@ -345,10 +348,10 @@ public class EdgeParser {
 		
 		// now get the edge array and dilate it
 		int[][] arr = Util.getBinaryArrayFromString(' ', Util.getColorFromArrayAsString(edge.lineColor, array));
-		Util.printArray(arr);
+		//Util.printArray(arr);
 		int[][] dilated = Util.dilate(arr);
-		System.out.println(" .... dilated:");
-		Util.printArray(dilated);
+		//System.out.println(" .... dilated:");
+		//Util.printArray(dilated);
 		
 		Pair<String, Integer> fromRolename = new Pair<String, Integer>(null, Integer.MAX_VALUE);
 		Pair<String, Integer> toRolename = new Pair<String, Integer>(null, Integer.MAX_VALUE);
@@ -373,7 +376,7 @@ public class EdgeParser {
 					}
 				} else {
 					// end rolename
-					if (distanceToEnd < toRolename.b) {
+					if (distanceToEnd <= toRolename.b) {
 						toRolename = new Pair<String, Integer>(sp.string, distanceToEnd);
 					}
 				}

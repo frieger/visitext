@@ -308,7 +308,7 @@ public class ModelElementParser {
 				System.out.println("||||" + guardString + "|||");
 				if (guardString.equalsIgnoreCase("abstract")) {
 					myClass.isAbstractClass = true;
-				} else if (guardString.equalsIgnoreCase("enum")) {
+				} else if (guardString.equalsIgnoreCase("enum") || guardString.equalsIgnoreCase("enumeration")) {
 					myClass.isEnumClass = true;
 				} else if (guardString.equalsIgnoreCase("interface")) {
 					myClass.isInterfaceClass = true;
