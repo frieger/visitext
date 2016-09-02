@@ -1,12 +1,17 @@
 package mutant;
 import java.io.File;
 import java.io.IOException;
+import java.nio.channels.MembershipKey;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EFactory;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
@@ -25,16 +30,22 @@ public class Mutant {
 	private static File mutantBasePath;
 	private static File mutantExternalModelsBasePath;
 	
+	private static Map<String, EPackage> namespaceUriToEPackageMap = new HashMap<String, EPackage>();
+
+	
 	public static void init(File mutantModelPath) {
+		System.out.println("Initializing MUTANT" + mutantModelPath.getAbsolutePath());
 		mutantBasePath = mutantModelPath;
 	}
 	
 	public static void init(File mutantModelPath, File externalModelsPath) {
+		System.out.println("Initializing MUTANT" + mutantModelPath.getAbsolutePath() + "  external models: " + externalModelsPath.getAbsolutePath());
 		mutantBasePath = mutantModelPath;
 		mutantExternalModelsBasePath = externalModelsPath;
+		loadAllMetaModelsFromPath(mutantExternalModelsBasePath);
 	}
 	
-	public static EPackage getPackage(String packageName) {
+	public static EPackage getPackage(String packageName, ModelType type) {
 		System.out.println("mutant get package");
 		StackTraceElement[] ste = Thread.currentThread().getStackTrace();
 		StackTraceElement callerMethod = ste[2];
@@ -42,20 +53,34 @@ public class Mutant {
 		String className = callerMethod.getClassName();
 		String methodName = callerMethod.getMethodName();
 		
-		String modelName = className + "_" + methodName.toLowerCase() + "_" + packageName;
+		String modelName = null;
+		if (type == ModelType.INPUT_MODEL) {
+			modelName = className + "_" + methodName.toLowerCase() + "_" + packageName;
+		} else if (type == ModelType.OUTPUT_MODEL) {
+			modelName = className + "_" + methodName.toLowerCase() + "-outputmodel" + "_" + packageName;
+		}
 		
 		EPackage retVal = (EPackage) loadMutantResource(modelName).getContents().get(0);
 		return retVal;
 	}
+
 	
 	private static Resource loadMutantResource(String modelName) {
-		return loadResourceFromFile(mutantBasePath + File.separator + modelName + ".ecore");
+		return loadResourceFromFile(mutantBasePath + File.separator + modelName + ".ecore", "ecore");
 	}
 	
-	private static Resource loadResourceFromFile(String filename) {
+	private static Resource loadMutantResourceAbstract(String modelName) {
+		return loadResourceFromFile(mutantBasePath + File.separator + modelName + ".xmi", "xmi");
+	}
+	
+	private static Resource loadResourceFromFile(String filename, String extension) {
 		EcoreFactory fact = EcoreFactory.eINSTANCE;
 		ResourceSet resourceSet = new ResourceSetImpl();
-		resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put("ecore", new XMIResourceFactoryImpl());
+		resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put(extension, new XMIResourceFactoryImpl());
+		for (Entry<String, EPackage> entry : namespaceUriToEPackageMap.entrySet()) {
+			resourceSet.getPackageRegistry().put(entry.getKey(), entry.getValue());
+
+		}
 		EcorePackage ep = EcorePackage.eINSTANCE;
 		URI fileUri = URI.createFileURI(new File(filename).getAbsolutePath());
 		Resource res = resourceSet.getResource(fileUri, true);
@@ -72,15 +97,78 @@ public class Mutant {
 	
 	
 	// abstract syntax:
-	public static EObject getRoot(String name) {
+	public static EObject getRoot(String name, ModelType type) {
+		System.out.println("getting root: " + name);
 		StackTraceElement[] ste = Thread.currentThread().getStackTrace();
 		StackTraceElement callerMethod = ste[2];
-		
+
 		String className = callerMethod.getClassName();
+		className = className.substring(className.lastIndexOf('.')+1);
 		String methodName = callerMethod.getMethodName();
 
-		String modelName = "mutant/" + className + "_" + methodName.toLowerCase() + "_" + name;
-		return null;
+		System.out.println("class name: " + className + "   methodName: " + methodName);
+		
+		String modelName = null;
+		if (type == ModelType.INPUT_MODEL) {
+			modelName = "mutant/" + className + "_" + methodName.toLowerCase() + "_" + name.toLowerCase();
+		} else if (type == ModelType.OUTPUT_MODEL) {
+			modelName = "mutant/" + className + "_" + methodName.toLowerCase() + "-outputmodel" + "_" + name.toLowerCase();
+		}
+
+		//String modelName = "mutant/" + className + "_" + methodName.toLowerCase() + "_" + name.toLowerCase();
+		
+		System.out.println("modelName: " + modelName);
+		
+		EObject retVal =  (EObject) loadMutantResourceAbstract(modelName).getContents().get(0);
+		
+		return retVal;
 	}
 
+	
+	public static void loadAllMetaModelsFromPath(File basePath) {
+		System.out.println(basePath);
+		File[] files = basePath.listFiles();
+		for (File f : files) {
+			System.out.println("Trying to load " + f.getPath());
+			String filename = f.getPath();
+			String fileExt = filename.substring(filename.lastIndexOf(".") + 1);
+			if (fileExt.equalsIgnoreCase("ecore")) {
+				System.out.println("loading " + f.getPath());
+				// load metamodel
+				EcoreFactory fact = EcoreFactory.eINSTANCE;
+				ResourceSet resourceSet = new ResourceSetImpl();
+				resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put("ecore", new XMIResourceFactoryImpl());
+				EcorePackage ep = EcorePackage.eINSTANCE;
+				URI fileUri = URI.createFileURI(new File(filename).getAbsolutePath());
+				Resource res = resourceSet.getResource(fileUri, true);
+				
+				EPackage metaModelPackage = (EPackage) res.getContents().get(0);
+				String namespaceUri = metaModelPackage.getNsURI();
+				namespaceUriToEPackageMap.put(namespaceUri, metaModelPackage);
+				System.out.println("Loaded " + filename + " (" + namespaceUri + ")");
+			}
+		}
+	}
+
+	public static enum ModelType {
+		INPUT_MODEL,
+		OUTPUT_MODEL
+	}
+	
+	/*
+	 * 		EPackage pkg = namespaceUriToEPackageMap.get(info.namespaceUri);
+				
+		List<EObject> modelElements = new ArrayList<EObject>();
+		Map<Integer, EObject> modelElementColors = new HashMap<Integer, EObject>();		// class colors of eclasses
+		//Map<String, EEnum> eenums = new HashMap<String, EEnum>();				// enum name and eenum object
+		
+		
+		// generate root object
+		EFactory modelElementFactory = pkg.getEFactoryInstance();
+		EClass rootClass = (EClass) pkg.getEClassifier(info.rootType);
+		EObject rootObject = modelElementFactory.create(rootClass);
+
+	 */
+	
+	
 }
